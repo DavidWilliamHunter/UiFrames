@@ -6,10 +6,11 @@ using UnityEngine.UIElements;
 namespace Threads.UiFrames.Toolkit
 {
     /// <summary>
-    /// Mouse and pen (and, without a touch controller, touch) for one UI Toolkit tree: drags frames,
-    /// scrolls them with the wheel, toggles drawers from their handles, and focuses the frame
-    /// pressed. A drag that starts on a button still moves its frame; once the frame takes the
-    /// pointer, the button loses it and does not click.
+    /// Mouse, pen and touch for one UI Toolkit tree: drags frames, scrolls them with the wheel,
+    /// toggles drawers from their handles, and focuses the frame pressed. Each pointer (each
+    /// finger) is tracked on its own, so several fingers can drag different frames at once. A drag
+    /// that starts on a button still moves its frame; once the frame takes the pointer, the button
+    /// loses it and does not click.
     /// <para>Routing: presses are seen at the root (trickle-down). While a press lasts, its moves and
     /// release are also watched on every element along the pressed path, because UI Toolkit sends
     /// a captured pointer's events to the capturing element (a Button's Clickable captures on press)
@@ -18,23 +19,32 @@ namespace Threads.UiFrames.Toolkit
     /// </summary>
     public sealed class ToolkitPointerController : IDisposable
     {
+        sealed class Press
+        {
+            public int PointerId;
+            public FramePointerTracker Tracker;
+            public readonly HashSet<VisualElement> Path = new HashSet<VisualElement>();
+            public VisualElement Captured;
+        }
+
         readonly ToolkitFrameBinder _binder;
-        readonly FramePointerTracker _tracker;
+        readonly FramePointerTrackers _trackers;
         readonly List<IFrameBehaviour> _candidates = new List<IFrameBehaviour>();
-        readonly List<VisualElement> _path = new List<VisualElement>();
-        readonly HashSet<VisualElement> _pathSet = new HashSet<VisualElement>();
-        VisualElement _captured;
+        readonly Dictionary<int, Press> _presses = new Dictionary<int, Press>();
+        // Path elements are shared by fingers pressing in the same area: count the presses watching each.
+        readonly Dictionary<VisualElement, int> _watching = new Dictionary<VisualElement, int>();
 
         public ToolkitPointerController(ToolkitFrameBinder binder, FrameEnvironment environment)
         {
             _binder = binder ?? throw new ArgumentNullException(nameof(binder));
-            _tracker = new FramePointerTracker(binder.Frames, environment);
+            _trackers = new FramePointerTrackers(binder.Frames, environment);
         }
 
-        /// <summary>Leave touch to a touch controller (TouchController) instead of handling it here.</summary>
+        /// <summary>Leave touch to a touch controller instead of handling it here.</summary>
         public bool IgnoreTouch { get; set; }
         public bool IsRunning { get; private set; }
-        public FramePointerTracker Tracker => _tracker;
+        /// <summary>One tracker per pointer.</summary>
+        public FramePointerTrackers Trackers => _trackers;
 
         public void Startup()
         {
@@ -58,8 +68,11 @@ namespace Threads.UiFrames.Toolkit
             root.UnregisterCallback<PointerUpEvent>(OnRootUp, TrickleDown.TrickleDown);
             root.UnregisterCallback<PointerCancelEvent>(OnRootCancel, TrickleDown.TrickleDown);
             root.UnregisterCallback<WheelEvent>(OnWheel, TrickleDown.TrickleDown);
-            if (_tracker.IsTracking) _tracker.Cancel(_tracker.PointerId);
-            EndPress();
+            foreach (var press in new List<Press>(_presses.Values))
+            {
+                if (press.Tracker.IsTracking) press.Tracker.Cancel(press.PointerId);
+                End(press);
+            }
         }
 
         public void Dispose() => Shutdown();
@@ -75,20 +88,25 @@ namespace Threads.UiFrames.Toolkit
         void OnDown(PointerDownEvent evt)
         {
             if (Ignore(evt) || evt.button > 0) return;
-            if (_tracker.IsTracking) { _tracker.Cancel(_tracker.PointerId); EndPress(); }
+            if (_presses.TryGetValue(evt.pointerId, out var old))
+            {
+                if (old.Tracker.IsTracking) old.Tracker.Cancel(old.PointerId);
+                End(old);
+            }
             var target = evt.target as VisualElement;
             _binder.CollectFrames(target, _candidates, out var handleOf);
             var p = ToDp(evt.position);
-            _tracker.Down(evt.pointerId, p.x, p.y, _candidates, handleOf);
-            if (_tracker.IsTracking) WatchPath(target);
-        }
-
-        void WatchPath(VisualElement target)
-        {
+            var tracker = _trackers.For(evt.pointerId);
+            tracker.Down(evt.pointerId, p.x, p.y, _candidates, handleOf);
+            if (!tracker.IsTracking) { _trackers.Release(evt.pointerId); return; }
+            var press = new Press { PointerId = evt.pointerId, Tracker = tracker };
+            _presses.Add(evt.pointerId, press);
             for (var ve = target; ve != null; ve = ve == _binder.Root ? null : ve.parent)
             {
-                _path.Add(ve);
-                _pathSet.Add(ve);
+                press.Path.Add(ve);
+                _watching.TryGetValue(ve, out var n);
+                _watching[ve] = n + 1;
+                if (n > 0) continue;
                 ve.RegisterCallback<PointerMoveEvent>(OnPathMove);
                 ve.RegisterCallback<PointerUpEvent>(OnPathUp);
                 ve.RegisterCallback<PointerCancelEvent>(OnPathCancel);
@@ -96,74 +114,112 @@ namespace Threads.UiFrames.Toolkit
             }
         }
 
-        void EndPress()
+        void End(Press press)
         {
-            foreach (var ve in _path)
+            foreach (var ve in press.Path)
             {
+                if (!_watching.TryGetValue(ve, out var n)) continue;
+                if (n > 1) { _watching[ve] = n - 1; continue; }
+                _watching.Remove(ve);
                 ve.UnregisterCallback<PointerMoveEvent>(OnPathMove);
                 ve.UnregisterCallback<PointerUpEvent>(OnPathUp);
                 ve.UnregisterCallback<PointerCancelEvent>(OnPathCancel);
                 ve.UnregisterCallback<PointerCaptureOutEvent>(OnPathCaptureOut);
             }
-            _path.Clear();
-            _pathSet.Clear();
-            var c = _captured;
-            _captured = null;
-            if (c != null && c.HasPointerCapture(_tracker.PointerId)) c.ReleasePointer(_tracker.PointerId);
+            press.Path.Clear();
+            var c = press.Captured;
+            press.Captured = null;
+            if (c != null && c.HasPointerCapture(press.PointerId)) c.ReleasePointer(press.PointerId);
+            _presses.Remove(press.PointerId);
+            _trackers.Release(press.PointerId);
         }
 
         // ---- Routing: once per event ----
 
-        bool AimedAtPath(EventBase evt) => evt.target is VisualElement t && _pathSet.Contains(t);
+        Press PressOf(int pointerId) => _presses.TryGetValue(pointerId, out var p) ? p : null;
+        static bool AimedAtPath(Press press, EventBase evt) => evt.target is VisualElement t && press.Path.Contains(t);
         static bool AtTarget(EventBase evt) => evt.currentTarget == evt.target;
 
-        void OnRootMove(PointerMoveEvent evt) { if (!AimedAtPath(evt)) Move(evt); }
-        void OnPathMove(PointerMoveEvent evt) { if (AtTarget(evt)) Move(evt); }
-        void OnRootUp(PointerUpEvent evt) { if (!AimedAtPath(evt)) Up(evt); }
-        void OnPathUp(PointerUpEvent evt) { if (AtTarget(evt)) Up(evt); }
-        void OnRootCancel(PointerCancelEvent evt) { if (!AimedAtPath(evt)) Cancel(evt.pointerId); }
-        void OnPathCancel(PointerCancelEvent evt) { if (AtTarget(evt)) Cancel(evt.pointerId); }
+        void OnRootMove(PointerMoveEvent evt)
+        {
+            var press = PressOf(evt.pointerId);
+            if (press != null && !AimedAtPath(press, evt)) Move(press, evt);
+        }
+
+        void OnPathMove(PointerMoveEvent evt)
+        {
+            var press = PressOf(evt.pointerId);
+            if (press != null && AtTarget(evt) && AimedAtPath(press, evt)) Move(press, evt);
+        }
+
+        void OnRootUp(PointerUpEvent evt)
+        {
+            var press = PressOf(evt.pointerId);
+            if (press != null && !AimedAtPath(press, evt)) Up(press, evt);
+        }
+
+        void OnPathUp(PointerUpEvent evt)
+        {
+            var press = PressOf(evt.pointerId);
+            if (press != null && AtTarget(evt) && AimedAtPath(press, evt)) Up(press, evt);
+        }
+
+        void OnRootCancel(PointerCancelEvent evt)
+        {
+            var press = PressOf(evt.pointerId);
+            if (press != null && !AimedAtPath(press, evt)) Cancel(press);
+        }
+
+        void OnPathCancel(PointerCancelEvent evt)
+        {
+            var press = PressOf(evt.pointerId);
+            if (press != null && AtTarget(evt) && AimedAtPath(press, evt)) Cancel(press);
+        }
 
         void OnPathCaptureOut(PointerCaptureOutEvent evt)
         {
             // Our frame lost the pointer to someone else: stop dragging.
-            if (!AtTarget(evt) || _captured == null || evt.target != _captured) return;
-            _captured = null;
-            Cancel(evt.pointerId);
+            var press = PressOf(evt.pointerId);
+            if (press == null || !AtTarget(evt) || press.Captured == null || evt.target != press.Captured) return;
+            press.Captured = null;
+            Cancel(press);
         }
 
         // ---- Handling ----
 
-        void Move(PointerMoveEvent evt)
+        void Move(Press press, PointerMoveEvent evt)
         {
-            if (!_tracker.IsTracking || evt.pointerId != _tracker.PointerId) return;
+            var tracker = press.Tracker;
+            if (!tracker.IsTracking) return;
             var p = ToDp(evt.position);
-            if (_tracker.Move(evt.pointerId, p.x, p.y))
+            if (tracker.Move(evt.pointerId, p.x, p.y))
             {
                 // The frame takes the pointer: whatever had it (a button's Clickable) gets
                 // PointerCaptureOut and will not click on release.
-                _captured = (VisualElement)_tracker.DragFrame.Element.Native;
-                _captured.CapturePointer(evt.pointerId);
+                press.Captured = (VisualElement)tracker.DragFrame.Element.Native;
+                press.Captured.CapturePointer(evt.pointerId);
             }
-            if (_tracker.IsDragging) evt.StopPropagation();
-            else if (!_tracker.IsTracking) EndPress(); // nothing moves this way: leave it to the UI
+            if (tracker.IsDragging) evt.StopPropagation();
+            else if (!tracker.IsTracking) End(press); // nothing moves this way: leave it to the UI
         }
 
-        void Up(PointerUpEvent evt)
+        void Up(Press press, PointerUpEvent evt)
         {
-            if (!_tracker.IsTracking || evt.pointerId != _tracker.PointerId) return;
-            var dragging = _tracker.IsDragging;
-            var p = ToDp(evt.position);
-            _tracker.Up(evt.pointerId, p.x, p.y);
-            EndPress();
+            var tracker = press.Tracker;
+            var dragging = tracker.IsDragging;
+            if (tracker.IsTracking)
+            {
+                var p = ToDp(evt.position);
+                tracker.Up(evt.pointerId, p.x, p.y);
+            }
+            End(press);
             if (dragging) evt.StopPropagation();
         }
 
-        void Cancel(int pointerId)
+        void Cancel(Press press)
         {
-            if (!_tracker.IsTracking || pointerId != _tracker.PointerId) return;
-            _tracker.Cancel(pointerId);
-            EndPress();
+            if (press.Tracker.IsTracking) press.Tracker.Cancel(press.PointerId);
+            End(press);
         }
 
         void OnWheel(WheelEvent evt)
@@ -171,7 +227,7 @@ namespace Threads.UiFrames.Toolkit
             _binder.CollectFrames(evt.target as VisualElement, _candidates, out _);
             var perTick = WheelEvent.scrollDeltaPerTick;
             if (perTick <= 0f) perTick = 1f;
-            if (_tracker.Wheel(_candidates, evt.delta.x / perTick, evt.delta.y / perTick)) evt.StopPropagation();
+            if (_trackers.Wheel.Wheel(_candidates, evt.delta.x / perTick, evt.delta.y / perTick)) evt.StopPropagation();
         }
     }
 }

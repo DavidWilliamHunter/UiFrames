@@ -3,7 +3,7 @@
 UI Frames adds **drawers**, **card strips** and **card decks** to Unity UI, for both **UI Toolkit** (UXML/USS) and **uGUI** (Canvas and GameObjects). You say *what* a frame is with tags (classes and `--uf-*` custom properties). The package decides *how* touch, mouse, keyboard and gamepad drive it.
 
 - Unity 6000.3 or later. The New Input System is required.
-- Touch comes from `com.threads.touchcontroller` when it is installed (in progress).
+- Touch works through the UI systems; `com.threads.touchcontroller`, when installed, adds platform thresholds, finger claiming and joysticks (section 4b).
 - Mouse, pen, keyboard and gamepad work without it.
 
 ## 1. Quick start
@@ -79,6 +79,26 @@ The runner looks for UI added, removed or re-tagged at run time every 0.5 s (`Fr
 - **Wheel:** scrolls strips by 48 dp per notch (`FrameEnvironment.WheelStepDp`) and steps decks one card per notch.
 - **Transforms:** scaled, rotated and world-space UI follows the pointer 1:1.
 
+## 4b. Touch and TouchController
+
+Touch reaches frames the same way as the mouse, through each UI system's pointer events, so buttons, sliders, scroll views and text fields keep their own touch behaviour.
+- **Several fingers:** each can drag a different frame at once.
+- **UI Toolkit:** it gets touch only through an EventSystem (*GameObject > UI > Event System*). The runner warns when one is missing.
+
+With `com.threads.touchcontroller` (0.4 or later) installed, add **UI Frames Touch** next to a **UI Frames Runner** and an **Intention Runner**. It adds:
+- **Platform thresholds:** the touch slop and density come from TouchController, including OS accessibility values, so frame drags and gestures start at the same point.
+- **Finger claiming:** a finger that goes down on a frame (or a drawer handle) is claimed by an Exclusive intention at priority 500, so game intentions (camera drags, taps on the world) never get it. Joysticks (priority 1000) still win.
+- **Joysticks** (`uf-joystick`): an on-screen joystick driven by TouchController's `TouchJoystick`, writing a stick of the TouchSticks Input System device. Bind `<TouchSticks>/leftStick` in your actions.
+
+| Class | Children | Properties |
+|---|---|---|
+| `uf-joystick` | `uf-joystick__knob` (follows the thumb), optional `uf-joystick__base` (moves to where a floating joystick is pressed) | `--uf-joystick-mode: fixed\|floating`, `--uf-joystick-radius` (dp, 60), `--uf-joystick-dead-zone` (0.1), `--uf-joystick-stick: left\|right\|none`, `--uf-joystick-follow`, `--uf-joystick-hide` |
+
+**Joystick details:**
+- **Fixed:** the joystick element's centre is the stick's centre.
+- **Floating:** the whole element is where a press may start.
+- **Input:** joysticks are touch-only (`--uf-input: touch` by default). In the Editor, turn on the Intention Runner's *Simulate Touch In Editor* to drive them with the mouse. This makes the mouse a finger, so the mouse wheel stops working while it is on.
+
 ## 4. Commands
 
 Every input becomes a `FrameCommand`:
@@ -120,7 +140,36 @@ Events for designers are on the runner: `onActivated`, `onSelectionChanged`, `on
 How keys arrive:
 - **uGUI:** the EventSystem's Move, Submit and Cancel go to the navigator. Selectables' own automatic navigation is turned off while the runner runs, and is restored afterwards.
 - **UI Toolkit:** keys are read from the Input System (`FrameNavigationController`). A panel without an EventSystem receives no keyboard navigation events at all; with one, the panel's own events are swallowed so each key acts once.
-- **Rebinding:** pass your own action map with the action names in `FrameNavigationController` to rebind keys. Holding a direction repeats it after 0.5 s, every 0.1 s.
+
+### Configuring keys (Unity Input System)
+
+All keys are Input System actions, so they can be remapped in the Input Actions editor or at run time.
+
+**1. UI Frames' own keys.**
+- Copy `Packages/com.threads.uiframes/Runtime/Input/UiFramesNavigation.inputactions` into your Assets and edit it.
+- Assign it to the runner's *Navigation Actions*, with *Navigation Map Name* `UiFrames`.
+- Action names:
+
+  | Action | Default binding |
+  |---|---|
+  | `Navigate` | arrows, d-pad, left stick |
+  | `Submit` | Enter, Space, A |
+  | `Cancel` | Esc, B |
+  | `Tab` | Tab |
+  | `Reverse` | Shift; held, Tab and CycleFrame go backwards |
+  | `Page` | Page Up/Down, shoulders |
+  | `Home` / `End` | Home / End |
+  | `Toggle` | Y; toggles the drawer |
+  | `Close` | unbound |
+  | `CycleFrame` | F6, Select |
+
+- Leave an action out and its key does nothing. A wrong map name logs a warning and the built-in keys are used.
+
+**2. uGUI's input module.** For uGUI, arrows, Enter and Esc come from the EventSystem's *Input System UI Input Module* (its Move, Submit and Cancel actions). Remap those there, as for any uGUI project. UI Frames' `Navigate`/`Submit`/`Cancel` are only used in uGUI while nothing is selected yet.
+
+**3. At run time.** `runner.Navigation.Actions` is the map in use. Apply overrides with `ApplyBindingOverride` or a rebinding screen (`PerformInteractiveRebinding`), and save them with `SaveBindingOverridesAsJson`.
+
+**Repeat:** holding a direction repeats after *Key Repeat Delay* (0.5 s), then every *Key Repeat Rate* (0.1 s); both are on the runner. uGUI's module repeats by its own settings.
 
 ## 6. Code: your own bootstrap and your own frames
 

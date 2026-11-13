@@ -87,6 +87,14 @@ namespace Threads.UiFrames.Demo
             else _sb.Append("keyboard: press an arrow key or Tab");
             foreach (var frame in runner.Frames.Frames)
                 if (frame is DeckFrame deck) _sb.Append("   deck: ").Append(deck.Index + 1).Append('/').Append(deck.Model.Count);
+            // The joystick writes TouchController's TouchSticks device (when it is installed).
+            foreach (var device in UnityEngine.InputSystem.InputSystem.devices)
+            {
+                if (device.layout != "TouchSticks" || !(device.TryGetChildControl("leftStick") is UnityEngine.InputSystem.Controls.Vector2Control stick)) continue;
+                var v = stick.ReadValue();
+                _sb.Append($"   stick: ({v.x:0.00}, {v.y:0.00})");
+                break;
+            }
             if (_lastPress.Length > 0) _sb.Append("   ").Append(_lastPress);
             var text = _sb.ToString();
             if (_status != null) _status.text = text;

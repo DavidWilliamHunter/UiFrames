@@ -5,7 +5,7 @@
             <ui:Label text="UI Frames: UI Toolkit" class="title" />
             <ui:Label name="status" text="" class="status" />
         </ui:VisualElement>
-        <ui:Label class="help" text="Mouse: drag a frame (also from its buttons), wheel to scroll, click the ≡ handle. Keyboard/gamepad: arrows/d-pad or Tab choose, Enter/A goes in (frame → card → control; Enter presses a button, or starts/stops adjusting a slider), Esc/B comes back out. Page Up/Down, Home/End, F6 jumps to the next frame; Y toggles the drawer." />
+        <ui:Label class="help" text="Mouse: drag a frame (also from its buttons), wheel to scroll, click the ≡ handle. Keyboard/gamepad: arrows/d-pad or Tab choose, Enter/A goes in (frame → card → control; Enter presses a button, or starts/stops adjusting a slider), Esc/B comes back out. Page Up/Down, Home/End, F6 jumps to the next frame; Y toggles the drawer. Touch: everything above, plus the joystick (bottom right) with TouchController installed." />
 
         <ui:Label class="section" text="Card strip: inertia, snaps to cards (.uf-card-strip, --uf-snap: card)" />
         <ui:VisualElement name="photos" class="uf-card-strip photos">
@@ -41,6 +41,10 @@
         <ui:VisualElement name="list" class="uf-card-strip list">
             <ui:VisualElement name="list-rows" class="uf-cards" />
         </ui:VisualElement>
+    </ui:VisualElement>
+
+    <ui:VisualElement name="joystick" class="uf-joystick joystick">
+        <ui:VisualElement class="uf-joystick__knob joystick-knob" />
     </ui:VisualElement>
 
     <ui:VisualElement name="menu" class="uf-drawer menu">

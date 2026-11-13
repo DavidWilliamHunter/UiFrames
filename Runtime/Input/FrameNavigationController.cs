@@ -32,6 +32,8 @@ namespace Threads.UiFrames.Input
         public const string ToggleAction = "Toggle";
         public const string CloseAction = "Close";
         public const string CycleFrameAction = "CycleFrame";
+        /// <summary>Held: Tab and CycleFrame go backwards (Shift by default).</summary>
+        public const string ReverseAction = "Reverse";
 
         readonly FrameSet _frames;
         readonly bool _ownsActions;
@@ -75,10 +77,12 @@ namespace Threads.UiFrames.Input
         }
 
         /// <summary>
-        /// The default bindings: Navigate (arrows, d-pad, left stick) and Submit (Enter, gamepad A)
-        /// only while nothing has UI focus; Tab (Shift for back); Page (Page Up/Down, shoulders);
-        /// Home/End; Toggle drawer (gamepad Y); CycleFrame (F6, Shift+F6, gamepad Select).
-        /// Close has no default binding (Esc reaches the navigator as the UI's Cancel).
+        /// The default bindings (the same as the shipped <c>UiFramesNavigation.inputactions</c>):
+        /// Navigate (arrows, d-pad, left stick), Submit (Enter, Space, gamepad A), Cancel (Esc,
+        /// gamepad B), Tab, Page (Page Up/Down, shoulders), Home/End, Toggle drawer (gamepad Y),
+        /// CycleFrame (F6, gamepad Select), Reverse (Shift: held, Tab and CycleFrame go back).
+        /// Close has no default binding. For uGUI, Navigate/Submit/Cancel are only used while
+        /// nothing is selected; the EventSystem's input module delivers them otherwise.
         /// </summary>
         public static InputActionMap CreateDefaultActions()
         {
@@ -106,6 +110,7 @@ namespace Threads.UiFrames.Input
             map.AddAction(CloseAction, InputActionType.Button);
             var cycle = map.AddAction(CycleFrameAction, InputActionType.Button, "<Keyboard>/f6");
             cycle.AddBinding("<Gamepad>/select");
+            map.AddAction(ReverseAction, InputActionType.Button, "<Keyboard>/shift");
             return map;
         }
 
@@ -272,9 +277,19 @@ namespace Threads.UiFrames.Input
             if (navigator.Host is ToolkitFocusController toolkit) toolkit.SendNative(key);
         }
 
+        /// <summary>The Reverse action is held (Shift by default; rebind it like any action).</summary>
+        bool Reversed
+        {
+            get
+            {
+                var reverse = Actions.FindAction(ReverseAction);
+                return reverse != null && reverse.IsPressed();
+            }
+        }
+
         void OnTab(InputAction.CallbackContext c)
         {
-            var back = c.control?.device is Keyboard k && k.shiftKey.isPressed;
+            var back = Reversed;
             var key = KeyTarget();
             if (key != null) { key.Tab(back ? -1 : 1); return; }
             var active = Active;
@@ -292,7 +307,7 @@ namespace Threads.UiFrames.Input
 
         void OnCycle(InputAction.CallbackContext c)
         {
-            var back = c.control?.device is Keyboard k && k.shiftKey.isPressed;
+            var back = Reversed;
             Active?.CycleFrame(back ? -1 : 1);
         }
     }

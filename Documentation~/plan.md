@@ -164,3 +164,47 @@ User decisions: a package default with `--uf-navigation: flat` to opt out; trivi
 **Tests:** 164 EditMode and 52 PlayMode tests pass.
 
 **Next:** touch through TouchController (Phase 4 touch, Phase 5 joystick views).
+
+## Stage: touch (decided 2026-11-13)
+
+**Spike results:**
+- Touch already drags frames through uGUI's EventSystem, and through UI Toolkit when an EventSystem exists.
+- UI Toolkit without an EventSystem gets no touch.
+
+**User decisions:**
+- Touch stays on the UI pointer path, so controls keep their native touch behaviour.
+- TouchController adds platform thresholds, finger claiming and joysticks.
+- A UI Toolkit scene with no EventSystem gets a warning, not an automatically created EventSystem.
+
+**Design** (assembly `Threads.UiFrames.TouchController`, compiled only when TouchController is installed):
+1. **`UiFramesTouch` (MonoBehaviour):** links a `UiFramesRunner` to an `IntentionRunner`.
+   - It attaches once both are running and re-attaches if the IntentionRunner restarts.
+   - It sets `FrameEnvironment.DragSlopDp` and `PixelsPerDp` from the running TouchSystem, so slop and dp agree with the platform and accessibility settings.
+   - `FlingThresholdDps` stays a frame-level setting: Android's minimum fling (50 dp/s) is too low to decide whether a drawer opens.
+2. **Claim intention:** `PressGesture`, Exclusive, priority 500 (below joysticks at 1000, above game intentions at 0).
+   - Its area is "over a frame (or a drawer's handle), not over a joystick view", hit-tested natively: `RectTransformUtility` for uGUI, `RuntimePanelUtils` for UI Toolkit.
+   - Game intentions therefore never get a finger that is on a frame.
+   - UI events are not affected, because they read the device directly.
+3. **Multi-finger:** the pointer controllers keep one tracker per pointer id, so several fingers can drag different frames at once. A second finger on a frame that is already being dragged is ignored.
+4. **`uf-joystick` kind** (with a `uf-joystick__knob` child), driven by TouchController's `TouchJoystick`.
+   - **Properties:** `--uf-joystick-mode: fixed|floating`, `--uf-joystick-radius` (dp), `--uf-joystick-dead-zone`, `--uf-joystick-stick: left|right|none` (the TouchSticks device), `--uf-joystick-follow`, `--uf-joystick-hide` (hidden while released).
+   - **Defaults:** `--uf-input: touch`, so the keyboard skips it and the mouse only drives it through TouchController's editor simulation.
+   - **View:** the knob is translated by the local delta from the origin to the thumb; a floating base moves to the origin.
+   - The kind is registered by `UiFramesTouch` into the runner's registry, which triggers a rescan.
+5. **Runner:** warns once when it has UIDocuments and no EventSystem exists. The Runner menu adds an EventSystem.
+6. **Tests:**
+   - EditMode: the claim area and the joystick frame on fakes, with TouchController's `IntentionSystemHarness`.
+   - PlayMode: a simulated touchscreen with a game intention that must not fire on a dragged frame; joystick knob movement; two fingers dragging two strips.
+
+### Touch stage: status (2026-11-13)
+
+**Built:** items 1–6 of the touch design.
+
+**Tests:**
+- 164 EditMode, 52 PlayMode and 5 touch PlayMode tests pass.
+- The package builds without TouchController; core tests pass there.
+- Both demo scenes, with TouchController in them, pass the scratch keyboard walkthroughs.
+
+**Not yet done:**
+- Device tests on Android, iOS and Surface.
+- The remaining UI Toolkit touch spikes: `:hover` after a tap, and when the TextField's on-screen keyboard opens.

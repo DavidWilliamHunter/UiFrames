@@ -67,6 +67,12 @@ namespace Threads.UiFrames.Editor
                 if (!runner.documents.Contains(doc)) runner.documents.Add(doc);
             if (!runner.toolkitDefaults) runner.toolkitDefaults = AssetDatabase.LoadAssetAtPath<StyleSheet>(DefaultsUss);
             if (!runner.toolkitTheme) runner.toolkitTheme = AssetDatabase.LoadAssetAtPath<StyleSheet>(ThemeUss);
+            if (!Object.FindFirstObjectByType<EventSystem>())
+            {
+                // Touch reaches UI Toolkit (and uGUI) only through an EventSystem.
+                var es = new GameObject("EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
+                Undo.RegisterCreatedObjectUndo(es, "Create EventSystem");
+            }
             if (!runner.eventSystem) runner.eventSystem = Object.FindFirstObjectByType<EventSystem>();
             EditorUtility.SetDirty(runner);
             Selection.activeGameObject = runner.gameObject;

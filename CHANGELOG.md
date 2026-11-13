@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.1.1] - preview (not yet tested on devices; release as 0.2.0 after device tests)
+
+### Added
+- Touch with TouchController (`Threads.UiFrames.TouchController`, compiled when `com.threads.touchcontroller` 0.4+ is installed): `UiFramesTouch` links a UI Frames Runner to an Intention Runner. It provides platform slop and density, claims fingers on frames away from game intentions (`TouchFrameClaim`), and adds `uf-joystick` frames (`JoystickKind`, `JoystickFrame`) writing the TouchSticks device. `FrameScreen` hit-tests and places elements in TouchController's screen space.
+- Several fingers drag different frames at once (`FramePointerTrackers`, one tracker per pointer).
+- The runner warns when UI Toolkit documents have no EventSystem (no touch then); the Runner menu adds one.
+- Keys are fully configurable through the Input System:
+  - `UiFramesNavigation.inputactions` ships the defaults as an editable asset.
+  - The runner takes an actions asset and a map name (replacing the single-action reference), plus key repeat delay and rate.
+  - A `Reverse` action (Shift) replaces the hard-coded Shift for Shift+Tab and Shift+F6.
+  - Tests cover a remapped asset, runtime overrides, a rebound Reverse, and a remapped uGUI input module.
+- Demos: EventSystem in the UI Toolkit scene; with TouchController installed, an Intention Runner, the bridge and a joystick, with the stick value in the status line.
+
 ## [0.1.0] - 2026-11-13
 
 ### Added

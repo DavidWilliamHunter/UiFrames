@@ -1,6 +1,6 @@
 {
   "name": "com.threads.uiframes",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "displayName": "UI Frames",
   "description": "Interactive UI frames (drawers, card strips, card decks) for both UI Toolkit and uGUI. Designers tag elements with style classes and custom properties; per-platform controllers drive the frames from touch, mouse, keyboard or gamepad through one semantic command layer. Touch support uses com.threads.touchcontroller when it is installed.",
   "unity": "6000.3",

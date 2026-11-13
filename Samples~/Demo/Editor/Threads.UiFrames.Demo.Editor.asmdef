@@ -8,7 +8,9 @@
         "Threads.UiFrames.Input",
         "Threads.UiFrames.Demo",
         "Unity.InputSystem",
-        "UnityEngine.UI"
+        "UnityEngine.UI",
+        "Threads.UiFrames.TouchController",
+        "Threads.TouchController"
     ],
     "includePlatforms": [
         "Editor"
@@ -19,6 +21,12 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.threads.touchcontroller",
+            "expression": "0.4.0",
+            "define": "THREADS_UF_TOUCHCONTROLLER"
+        }
+    ],
     "noEngineReferences": false
 }

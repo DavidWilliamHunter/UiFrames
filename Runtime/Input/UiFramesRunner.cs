@@ -52,8 +52,15 @@ namespace Threads.UiFrames.Input
         public bool navigation = true;
         [Tooltip("Leave touch to a touch controller (TouchController) instead of the pointer controllers.")]
         public bool pointerIgnoresTouch;
-        [Tooltip("Optional: an action map with the FrameNavigationController action names. Empty = built-in defaults.")]
-        public InputActionReference navigationMap;
+        [Tooltip("Optional: your keys. An actions asset with a map using the FrameNavigationController action names " +
+                 "(copy the package's UiFramesNavigation.inputactions to start). Empty = the built-in defaults.")]
+        public InputActionAsset navigationActions;
+        [Tooltip("The map in Navigation Actions to use.")]
+        public string navigationMapName = "UiFrames";
+        [Tooltip("Holding a direction repeats it after this long (seconds).")]
+        public float keyRepeatDelay = 0.5f;
+        [Tooltip("Then repeats every this long (seconds).")]
+        public float keyRepeatRate = 0.1f;
         [Tooltip("The EventSystem whose selection uGUI frames follow. Empty = the current EventSystem at startup.")]
         public EventSystem eventSystem;
 
@@ -106,12 +113,27 @@ namespace Threads.UiFrames.Input
 
             if (navigation)
             {
-                _navigation = new FrameNavigationController(Frames, navigationMap ? navigationMap.action.actionMap : null);
+                InputActionMap map = null;
+                if (navigationActions)
+                {
+                    map = navigationActions.FindActionMap(navigationMapName);
+                    if (map == null)
+                        Debug.LogWarning($"UI Frames: '{navigationActions.name}' has no action map '{navigationMapName}'; using the built-in keys.", this);
+                }
+                _navigation = new FrameNavigationController(Frames, map)
+                {
+                    RepeatDelay = keyRepeatDelay,
+                    RepeatRate = keyRepeatRate,
+                };
                 _navigation.Startup();
             }
 
             _pendingDocuments.Clear();
             foreach (var d in documents) if (d) _pendingDocuments.Add(d);
+            if (_pendingDocuments.Count > 0 && !eventSystem && !FindFirstObjectByType<EventSystem>())
+                Debug.LogWarning("UI Frames: UI Toolkit gets no touch (and, in some setups, no mouse or navigation) events " +
+                                 "without an EventSystem. Keyboard and gamepad still work through this runner. " +
+                                 "Add GameObject > UI > Event System for touch.", this);
             BindPendingDocuments();
 
             var es = eventSystem ? eventSystem : EventSystem.current;

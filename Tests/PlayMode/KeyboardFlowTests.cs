@@ -82,10 +82,19 @@ namespace Threads.UiFrames.Tests
         Slider _slider;
         int _clicks;
 
-        IEnumerator BuildUgui()
+        IEnumerator BuildUgui(InputActionAsset moduleKeys = null, InputActionAsset frameKeys = null)
         {
-            Keep(new GameObject("EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule)))
-                .GetComponent<InputSystemUIInputModule>().AssignDefaultActions();
+            var module = Keep(new GameObject("EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule)))
+                .GetComponent<InputSystemUIInputModule>();
+            if (moduleKeys == null) module.AssignDefaultActions();
+            else
+            {
+                // A project's own UI actions, as set on the input module in the Inspector.
+                module.actionsAsset = moduleKeys;
+                module.move = InputActionReference.Create(moduleKeys.FindAction("UI/Navigate"));
+                module.submit = InputActionReference.Create(moduleKeys.FindAction("UI/Submit"));
+                module.cancel = InputActionReference.Create(moduleKeys.FindAction("UI/Cancel"));
+            }
             var canvas = Keep(new GameObject("Canvas", typeof(Canvas), typeof(GraphicRaycaster)));
             canvas.GetComponent<Canvas>().renderMode = RenderMode.ScreenSpaceOverlay;
             var root = (RectTransform)canvas.transform;
@@ -128,6 +137,7 @@ namespace Threads.UiFrames.Tests
             go.SetActive(false);
             _runner = go.AddComponent<UiFramesRunner>();
             _runner.uguiRoots.Add(root);
+            _runner.navigationActions = frameKeys;
             go.SetActive(true);
             _runner.Environment.PixelsPerDp = 1f;
             _clicks = 0;
@@ -195,7 +205,7 @@ namespace Threads.UiFrames.Tests
 
         UIDocument _doc;
 
-        IEnumerator BuildToolkit(bool withEventSystem)
+        IEnumerator BuildToolkit(bool withEventSystem, InputActionAsset keys = null, string mapName = "UiFrames")
         {
 #if UNITY_EDITOR
             var tree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Packages/com.threads.uiframes/Tests/PlayMode/TestAssets/TestFrames.uxml");
@@ -218,6 +228,8 @@ namespace Threads.UiFrames.Tests
             _doc.visualTreeAsset = tree;
             _runner = go.AddComponent<UiFramesRunner>();
             _runner.documents.Add(_doc);
+            _runner.navigationActions = keys;
+            _runner.navigationMapName = mapName;
             go.SetActive(true);
             _runner.Environment.PixelsPerDp = 1f;
             yield return Wait(0.2f);
@@ -259,6 +271,139 @@ namespace Threads.UiFrames.Tests
             yield return Tap(_kb.rightArrowKey);
             Assert.AreEqual(7f, slider.value, 1e-3f, "--uf-arrow-step: 0.2 of 0..10");
         }
+
+        // ---------------- Key configuration through the Input System ----------------
+
+        [UnityTest]
+        public IEnumerator UguiKeysComeFromTheInputModuleAndYourAsset()
+        {
+            // The input module's UI actions (arrows/Enter/Esc for uGUI) remapped to WASD/E/Q...
+            var ui = Keep(ScriptableObject.CreateInstance<InputActionAsset>());
+            var uiMap = ui.AddActionMap("UI");
+            uiMap.AddAction("Navigate", InputActionType.PassThrough, expectedControlLayout: "Vector2")
+                .AddCompositeBinding("2DVector").With("Up", "<Keyboard>/w").With("Down", "<Keyboard>/s")
+                .With("Left", "<Keyboard>/a").With("Right", "<Keyboard>/d");
+            uiMap.AddAction("Submit", InputActionType.Button, "<Keyboard>/e");
+            uiMap.AddAction("Cancel", InputActionType.Button, "<Keyboard>/q");
+            // ...and the runner's own keys (Tab is UI Frames', as uGUI has none) with Tab on R.
+            var frames = Keep(ScriptableObject.CreateInstance<InputActionAsset>());
+            frames.AddActionMap("UiFrames").AddAction(FrameNavigationController.TabAction, InputActionType.Button, "<Keyboard>/r");
+
+            yield return BuildUgui(ui, frames);
+            yield return Tap(_kb.rKey);
+            Assert.AreEqual("Photos", Selected, "R is Tab");
+            yield return Tap(_kb.eKey);
+            Assert.AreEqual("Card 1", Selected, "E goes in (the module's Submit)");
+            yield return Tap(_kb.dKey);
+            Assert.AreEqual("Card 2", Selected, "D moves (the module's Navigate)");
+            yield return Tap(_kb.rightArrowKey);
+            Assert.AreEqual("Card 2", Selected, "the arrows are not bound");
+            yield return Tap(_kb.qKey);
+            Assert.AreEqual("Photos", Selected, "Q comes out (the module's Cancel)");
+        }
+
+        static InputActionAsset Remapped()
+        {
+            var asset = ScriptableObject.CreateInstance<InputActionAsset>();
+            var map = asset.AddActionMap("UiFrames");
+            var nav = map.AddAction(FrameNavigationController.NavigateAction, InputActionType.Value, expectedControlLayout: "Vector2");
+            nav.AddCompositeBinding("2DVector").With("Up", "<Keyboard>/w").With("Down", "<Keyboard>/s")
+                .With("Left", "<Keyboard>/a").With("Right", "<Keyboard>/d");
+            map.AddAction(FrameNavigationController.SubmitAction, InputActionType.Button, "<Keyboard>/e");
+            map.AddAction(FrameNavigationController.CancelAction, InputActionType.Button, "<Keyboard>/q");
+            map.AddAction(FrameNavigationController.TabAction, InputActionType.Button, "<Keyboard>/r");
+            return asset;
+        }
+
+        [UnityTest]
+        public IEnumerator KeysComeFromYourActionsAsset()
+        {
+            var keys = Keep(Remapped());
+            yield return BuildToolkit(withEventSystem: false, keys: keys);
+            var cards = _doc.rootVisualElement.Q("cards");
+
+            yield return Tap(_kb.tabKey);
+            Assert.IsNull(Nav.Selected, "Tab is not bound in this asset");
+            yield return Tap(_kb.rKey);
+            Assert.AreEqual("strip", Selected, "R is this asset's Tab");
+            yield return Tap(_kb.eKey);
+            Assert.AreSame(cards[0], Nav.Selected.Native, "E goes in");
+            yield return Tap(_kb.dKey);
+            Assert.AreSame(cards[1], Nav.Selected.Native, "D moves right");
+            yield return Tap(_kb.rightArrowKey);
+            Assert.AreSame(cards[1], Nav.Selected.Native, "the arrows are not bound");
+            yield return Tap(_kb.qKey);
+            Assert.AreEqual("strip", Selected, "Q comes out");
+        }
+
+        [UnityTest]
+        public IEnumerator BindingsCanBeOverriddenAtRunTime()
+        {
+            yield return BuildToolkit(withEventSystem: false);
+            // What a rebinding screen does (PerformInteractiveRebinding ends in the same override).
+            _runner.Navigation.Actions.FindAction(FrameNavigationController.SubmitAction).ApplyBindingOverride(0, "<Keyboard>/f");
+            yield return Tap(_kb.tabKey);
+            yield return Tap(_kb.enterKey);
+            Assert.AreEqual(0, Nav.Depth, "Enter was rebound away");
+            yield return Tap(_kb.fKey);
+            Assert.AreEqual(1, Nav.Depth, "F now goes in");
+        }
+
+        [UnityTest]
+        public IEnumerator ReverseIsAnActionToo()
+        {
+            yield return BuildToolkit(withEventSystem: false);
+            yield return Tap(_kb.tabKey);
+            yield return Tap(_kb.tabKey);
+            Assert.AreEqual("vstrip", Selected);
+            Press(_kb.leftShiftKey);
+            yield return Tap(_kb.tabKey);
+            Release(_kb.leftShiftKey);
+            Assert.AreEqual("strip", Selected, "Shift+Tab goes back");
+
+            _runner.Navigation.Actions.FindAction(FrameNavigationController.ReverseAction).ApplyBindingOverride(0, "<Keyboard>/ctrl");
+            Press(_kb.leftShiftKey);
+            yield return Tap(_kb.tabKey);
+            Release(_kb.leftShiftKey);
+            Assert.AreEqual("vstrip", Selected, "Shift no longer reverses");
+            Press(_kb.leftCtrlKey);
+            yield return Tap(_kb.tabKey);
+            Release(_kb.leftCtrlKey);
+            Assert.AreEqual("strip", Selected, "Ctrl does");
+        }
+
+        [UnityTest]
+        public IEnumerator WrongMapNameIsReportedAndDefaultsUsed()
+        {
+            var keys = Keep(Remapped());
+            LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex("has no action map 'Nope'"));
+            yield return BuildToolkit(withEventSystem: false, keys: keys, mapName: "Nope");
+            yield return Tap(_kb.tabKey);
+            Assert.AreEqual("strip", Selected, "the built-in keys");
+        }
+
+#if UNITY_EDITOR
+        [Test]
+        public void ShippedActionsAssetMatchesTheDefaults()
+        {
+            var asset = AssetDatabase.LoadAssetAtPath<InputActionAsset>("Packages/com.threads.uiframes/Runtime/Input/UiFramesNavigation.inputactions");
+            Assert.IsNotNull(asset, "the package ships its keys as an editable asset");
+            var shipped = asset.FindActionMap("UiFrames");
+            var defaults = FrameNavigationController.CreateDefaultActions();
+            try
+            {
+                Assert.AreEqual(defaults.actions.Count, shipped.actions.Count);
+                foreach (var action in defaults.actions)
+                {
+                    var other = shipped.FindAction(action.name);
+                    Assert.IsNotNull(other, action.name);
+                    CollectionAssert.AreEqual(System.Linq.Enumerable.Select(action.bindings, b => b.path),
+                        System.Linq.Enumerable.Select(other.bindings, b => b.path), action.name);
+                }
+            }
+            finally { defaults.Dispose(); }
+        }
+#endif
 
         [UnityTest]
         public IEnumerator ToolkitFlowWithoutEventSystem()

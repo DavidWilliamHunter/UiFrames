@@ -35,6 +35,9 @@ namespace Threads.UiFrames
         }
 
         public FrameInputKinds Kind { get; }
+        /// <summary>Frames another pointer is already dragging (so two fingers never drag one
+        /// frame); set by controllers that track several pointers.</summary>
+        public Func<IFrameBehaviour, bool> Busy { get; set; }
         public bool IsTracking { get; private set; }
         public int PointerId { get; private set; }
         /// <summary>The frame being dragged, or null.</summary>
@@ -79,6 +82,7 @@ namespace Threads.UiFrames
             if (dx * dx + dy * dy < _env.DragSlopDp * _env.DragSlopDp) return false;
             var sx = _startX;
             var sy = _startY;
+            if (Busy != null) _candidates.RemoveAll(f => Busy(f));
             var frame = FrameDragRouting.Choose(_candidates, f => f.Element.ToLocalDeltaDp(sx, sy, xDp, yDp), Kind);
             if (frame == null)
             {

@@ -1,0 +1,37 @@
+{
+    "name": "Threads.UiFrames.Tests.Touch",
+    "rootNamespace": "Threads.UiFrames.Tests",
+    "references": [
+        "Threads.UiFrames",
+        "Threads.UiFrames.Unity",
+        "Threads.UiFrames.Toolkit",
+        "Threads.UiFrames.UGUI",
+        "Threads.UiFrames.Input",
+        "Threads.UiFrames.TouchController",
+        "Threads.TouchController",
+        "Unity.InputSystem",
+        "Unity.InputSystem.TestFramework",
+        "UnityEngine.UI",
+        "UnityEngine.TestRunner"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS",
+        "THREADS_UF_TOUCHCONTROLLER"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.threads.touchcontroller",
+            "expression": "0.4.0",
+            "define": "THREADS_UF_TOUCHCONTROLLER"
+        }
+    ],
+    "noEngineReferences": false
+}

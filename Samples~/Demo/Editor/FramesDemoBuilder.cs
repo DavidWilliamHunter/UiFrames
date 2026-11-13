@@ -10,6 +10,10 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using UnityEngine.UIElements;
 using Image = UnityEngine.UI.Image;
+#if THREADS_UF_TOUCHCONTROLLER
+using Threads.TouchController.Intentions;
+using Threads.UiFrames.TouchInput;
+#endif
 
 namespace Threads.UiFrames.Demo.Editor
 {
@@ -67,6 +71,10 @@ namespace Threads.UiFrames.Demo.Editor
             settings.scale = 1f;
             EditorUtility.SetDirty(settings);
 
+            // Touch reaches UI Toolkit only through an EventSystem (keyboard and gamepad come
+            // through the runner either way).
+            new GameObject("EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
+
             var go = new GameObject("UI Toolkit Frames");
             var doc = go.AddComponent<UIDocument>();
             doc.panelSettings = settings;
@@ -80,6 +88,7 @@ namespace Threads.UiFrames.Demo.Editor
             var demo = go.AddComponent<FramesDemo>();
             demo.runner = runner;
             demo.document = doc;
+            AddTouch(go, runner);
 
             var path = $"{dir}/Scenes/UiFramesToolkitDemo.unity";
             EditorSceneManager.SaveScene(scene, path);
@@ -111,7 +120,7 @@ namespace Threads.UiFrames.Demo.Editor
             var status = Label(root, "Status", "", 14, new Vector2(72, -46), new Vector2(1100, 22), FontStyle.Normal, new Color32(255, 196, 64, 255));
             Label(root, "Help",
                 "Mouse: drag a frame (also from its buttons), wheel to scroll, click the ≡ handle. Keyboard/gamepad: arrows/d-pad or Tab choose, Enter/A goes in " +
-                "(frame → card → control; Enter presses a button, or starts/stops adjusting a slider), Esc/B comes back out. Page Up/Down, Home/End, F6 jumps to the next frame; Y toggles the drawer.",
+                "(frame → card → control; Enter presses a button, or starts/stops adjusting a slider), Esc/B comes back out. Page Up/Down, Home/End, F6 jumps to the next frame; Y toggles the drawer. Touch: everything above, plus the joystick (bottom right) with TouchController installed.",
                 13, new Vector2(72, -70), new Vector2(1000, 40), FontStyle.Normal, new Color32(170, 180, 200, 255));
 
             // Card strip
@@ -205,6 +214,15 @@ namespace Threads.UiFrames.Demo.Editor
             sheet.AddRule(".uf-drawer", new UiFrameDeclaration("--uf-edge", "auto"), new UiFrameDeclaration("--uf-duration", "220ms"));
             EditorUtility.SetDirty(sheet);
 
+            // An on-screen joystick (uf-joystick): driven by TouchController when it is installed.
+            var stick = Rect("Joystick", root, new Vector2(1, 0), new Vector2(1, 0), new Vector2(1, 0), new Vector2(-40, 40), new Vector2(180, 180));
+            var stickImage = stick.gameObject.AddComponent<Image>();
+            stickImage.color = new Color(1f, 1f, 1f, 0.12f);
+            Classes(stick, "uf-joystick");
+            var knob = Rect("Knob", stick, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(64, 64));
+            knob.gameObject.AddComponent<Image>().color = Highlight;
+            Classes(knob, "uf-joystick__knob");
+
             var runnerGo = new GameObject("UI Frames");
             var runner = runnerGo.AddComponent<UiFramesRunner>();
             runner.uguiRoots.Add(root);
@@ -214,10 +232,26 @@ namespace Threads.UiFrames.Demo.Editor
             demo.runner = runner;
             demo.uguiStatus = status;
             demo.uguiRoot = root;
+            AddTouch(runnerGo, runner);
 
             var path = $"{dir}/Scenes/UiFramesUguiDemo.unity";
             EditorSceneManager.SaveScene(scene, path);
             return path;
+        }
+
+        /// <summary>With TouchController installed: its runner and the bridge (finger claiming,
+        /// platform slop, joysticks). Editor touch simulation stays off so the mouse keeps its
+        /// wheel; turn on Simulate Touch In Editor on the Intention Runner to try the joystick with a mouse.</summary>
+        static void AddTouch(GameObject go, UiFramesRunner runner)
+        {
+#if THREADS_UF_TOUCHCONTROLLER
+            var touch = go.AddComponent<IntentionRunner>();
+            touch.SimulateTouchInEditor = false;
+            touch.CreateTouchSticks = true;
+            var bridge = go.AddComponent<UiFramesTouch>();
+            bridge.frames = runner;
+            bridge.touch = touch;
+#endif
         }
 
         static void AddCamera()

@@ -60,6 +60,27 @@
 .menu.uf-selected .menu-handle { background-color: rgb(255, 196, 64); }
 .menu.uf-selected .menu-handle-label { color: rgb(22, 26, 34); }
 
+/* An on-screen joystick (driven by TouchController when it is installed). */
+.joystick {
+    position: absolute;
+    right: 40px;
+    bottom: 40px;
+    width: 180px;
+    height: 180px;
+    border-radius: 90px;
+    background-color: rgba(255, 255, 255, 0.12);
+}
+
+.joystick-knob {
+    position: absolute;
+    left: 58px;
+    top: 58px;
+    width: 64px;
+    height: 64px;
+    border-radius: 32px;
+    background-color: rgb(255, 196, 64);
+}
+
 /* ---- Plain looks ---- */
 
 .screen {

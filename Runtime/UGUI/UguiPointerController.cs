@@ -17,20 +17,21 @@ namespace Threads.UiFrames.UGUI
     public sealed class UguiPointerController : IDisposable
     {
         readonly UguiFrameBinder _binder;
-        readonly FramePointerTracker _tracker;
+        readonly FramePointerTrackers _trackers;
         readonly List<IFrameBehaviour> _candidates = new List<IFrameBehaviour>();
-        bool _passedOn;
+        readonly HashSet<int> _passedOn = new HashSet<int>();
 
         public UguiPointerController(UguiFrameBinder binder)
         {
             _binder = binder ?? throw new ArgumentNullException(nameof(binder));
-            _tracker = new FramePointerTracker(binder.Frames, binder.Environment);
+            _trackers = new FramePointerTrackers(binder.Frames, binder.Environment);
         }
 
         /// <summary>Leave touch to a touch controller (TouchController) instead of handling it here.</summary>
         public bool IgnoreTouch { get; set; }
         public bool IsRunning { get; private set; }
-        public FramePointerTracker Tracker => _tracker;
+        /// <summary>One tracker per pointer: several fingers can drag different frames at once.</summary>
+        public FramePointerTrackers Trackers => _trackers;
 
         public void Startup()
         {
@@ -43,7 +44,8 @@ namespace Threads.UiFrames.UGUI
         {
             if (!IsRunning) return;
             IsRunning = false;
-            if (_tracker.IsTracking) _tracker.Cancel(_tracker.PointerId);
+            _trackers.CancelAll();
+            _passedOn.Clear();
             if (_binder.Pointer == this) _binder.Pointer = null;
         }
 
@@ -84,28 +86,37 @@ namespace Threads.UiFrames.UGUI
         internal void BeginDrag(UguiFramePointer from, PointerEventData e)
         {
             if (Ignore(e)) return;
-            _passedOn = false;
+            _passedOn.Remove(e.pointerId);
             _binder.CollectFrames(Target(e.pointerPressRaycast.gameObject) ?? from.transform, _candidates, out _);
             var press = ToDp(e.pressPosition);
-            _tracker.Down(e.pointerId, press.x, press.y, _candidates);
-            if (!_tracker.IsTracking) { PassOn(from, e); return; }
+            var tracker = _trackers.For(e.pointerId);
+            tracker.Down(e.pointerId, press.x, press.y, _candidates);
+            if (!tracker.IsTracking) { PassOn(from, e); return; }
             Drag(from, e);
         }
 
         internal void Drag(UguiFramePointer from, PointerEventData e)
         {
-            if (_passedOn || !_tracker.IsTracking || e.pointerId != _tracker.PointerId) return;
+            if (_passedOn.Contains(e.pointerId)) return;
+            var tracker = _trackers.Active(e.pointerId);
+            if (tracker == null) return;
             var p = ToDp(e.position);
-            _tracker.Move(e.pointerId, p.x, p.y);
-            // No frame moves this way: hand the drag to an outer drag handler (e.g. a ScrollRect).
-            if (!_tracker.IsTracking) PassOn(from, e);
+            tracker.Move(e.pointerId, p.x, p.y);
+            // No frame moves this way (or the frame is another finger's): hand the drag to an outer
+            // drag handler (e.g. a ScrollRect).
+            if (!tracker.IsTracking) PassOn(from, e);
         }
 
         internal void EndDrag(PointerEventData e)
         {
-            if (_passedOn || !_tracker.IsTracking || e.pointerId != _tracker.PointerId) return;
-            var p = ToDp(e.position);
-            _tracker.Up(e.pointerId, p.x, p.y);
+            var passed = _passedOn.Remove(e.pointerId);
+            var tracker = _trackers.Active(e.pointerId);
+            if (!passed && tracker != null)
+            {
+                var p = ToDp(e.position);
+                tracker.Up(e.pointerId, p.x, p.y);
+            }
+            _trackers.Release(e.pointerId);
         }
 
         internal void Scroll(UguiFramePointer from, PointerEventData e)
@@ -117,7 +128,7 @@ namespace Threads.UiFrames.UGUI
                     ? m.scrollDeltaPerTick : 1f;
                 _binder.CollectFrames(Target(e.pointerCurrentRaycast.gameObject) ?? from.transform, _candidates, out _);
                 // uGUI: +y is wheel up (earlier content).
-                used = _tracker.Wheel(_candidates, e.scrollDelta.x / perTick, -e.scrollDelta.y / perTick);
+                used = _trackers.Wheel.Wheel(_candidates, e.scrollDelta.x / perTick, -e.scrollDelta.y / perTick);
             }
             if (!used && from.transform.parent)
                 ExecuteEvents.ExecuteHierarchy(from.transform.parent.gameObject, e, ExecuteEvents.scrollHandler);
@@ -125,7 +136,8 @@ namespace Threads.UiFrames.UGUI
 
         void PassOn(UguiFramePointer from, PointerEventData e)
         {
-            _passedOn = true;
+            _passedOn.Add(e.pointerId);
+            _trackers.Release(e.pointerId);
             var parent = from.transform.parent;
             var handler = parent ? ExecuteEvents.GetEventHandler<IBeginDragHandler>(parent.gameObject) : null;
             if (!handler) return;
