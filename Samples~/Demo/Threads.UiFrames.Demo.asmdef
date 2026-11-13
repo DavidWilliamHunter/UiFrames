@@ -1,0 +1,22 @@
+{
+    "name": "Threads.UiFrames.Demo",
+    "rootNamespace": "Threads.UiFrames.Demo",
+    "references": [
+        "Threads.UiFrames",
+        "Threads.UiFrames.Unity",
+        "Threads.UiFrames.Toolkit",
+        "Threads.UiFrames.UGUI",
+        "Threads.UiFrames.Input",
+        "Unity.InputSystem",
+        "UnityEngine.UI"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

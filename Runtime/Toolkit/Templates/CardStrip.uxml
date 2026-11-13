@@ -1,0 +1,13 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <!-- A card strip: drag it in from UI Builder's Library (Project tab). Give it a size, set
+         --uf-snap or --uf-axis in USS, and put cards inside "uf-cards". Needs UiFrames.uss. -->
+    <ui:VisualElement name="card-strip" class="uf-card-strip" style="height: 160px;">
+        <ui:VisualElement class="uf-cards">
+            <ui:VisualElement name="card-1" style="width: 150px; height: 150px; margin-right: 12px; background-color: rgb(58, 92, 140);" />
+            <ui:VisualElement name="card-2" style="width: 150px; height: 150px; margin-right: 12px; background-color: rgb(58, 92, 140);" />
+            <ui:VisualElement name="card-3" style="width: 150px; height: 150px; margin-right: 12px; background-color: rgb(58, 92, 140);" />
+            <ui:VisualElement name="card-4" style="width: 150px; height: 150px; margin-right: 12px; background-color: rgb(58, 92, 140);" />
+            <ui:VisualElement name="card-5" style="width: 150px; height: 150px; margin-right: 12px; background-color: rgb(58, 92, 140);" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

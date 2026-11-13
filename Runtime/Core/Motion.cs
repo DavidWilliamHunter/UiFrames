@@ -250,25 +250,27 @@ namespace Threads.UiFrames
     }
 
     /// <summary>
-    /// Converts screen motion (dp, y up, the TouchController and Input System convention) into a
-    /// model's positive direction. UI Toolkit panel coordinates are y down: flip y first.
+    /// Converts motion in a frame's local layout space (dp, y down, as <see cref="IFrameElement"/>
+    /// geometry) into a model's positive direction. Pointer controllers get local deltas from
+    /// <see cref="IFrameElement.ToLocalDeltaDp"/>, so scaled and rotated frames follow 1:1.
     /// </summary>
     public static class FrameAxisMath
     {
-        /// <summary>Drawer: positive = opening. A left drawer opens to the right, a bottom one upwards.</summary>
+        /// <summary>Drawer: positive = opening. A left drawer opens to the right, a bottom one upwards
+        /// (negative y, as y is down).</summary>
         public static float DrawerDelta(FrameEdge edge, float dx, float dy) => edge switch
         {
             FrameEdge.Left => dx,
             FrameEdge.Right => -dx,
-            FrameEdge.Bottom => dy,
-            FrameEdge.Top => -dy,
+            FrameEdge.Bottom => -dy,
+            FrameEdge.Top => dy,
             _ => 0f,
         };
 
         /// <summary>Strip/deck: positive = later content. Dragging left or up reveals what follows
         /// (content runs left to right, and top to bottom).</summary>
         public static float ScrollDelta(FrameAxis axis, float dx, float dy) =>
-            axis == FrameAxis.Horizontal ? -dx : dy;
+            axis == FrameAxis.Horizontal ? -dx : -dy;
 
         /// <summary>The axis a drawer moves along.</summary>
         public static FrameAxis DrawerAxis(FrameEdge edge) =>

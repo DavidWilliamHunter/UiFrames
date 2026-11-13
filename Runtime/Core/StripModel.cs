@@ -41,6 +41,16 @@ namespace Threads.UiFrames
         public float ContentDp { get; }
         public int Count => _starts.Length;
         public float MaxOffset => Math.Max(0f, ContentDp - ViewportDp);
+
+        /// <summary>Same measurements (within 0.01 dp).</summary>
+        public bool SameAs(CardLayout other)
+        {
+            if (other == null || other.Count != Count) return false;
+            if (Math.Abs(other.ViewportDp - ViewportDp) > 0.01f || Math.Abs(other.ContentDp - ContentDp) > 0.01f) return false;
+            for (var i = 0; i < Count; i++)
+                if (Math.Abs(other._starts[i] - _starts[i]) > 0.01f || Math.Abs(other._sizes[i] - _sizes[i]) > 0.01f) return false;
+            return true;
+        }
         public float Start(int i) => _starts[i];
         public float Size(int i) => _sizes[i];
         public float End(int i) => _starts[i] + _sizes[i];
@@ -118,6 +128,30 @@ namespace Threads.UiFrames
         }
 
         public void Update() => _motion.Update();
+
+        /// <summary>Whether a step (+1 / −1) would move the strip.</summary>
+        public bool CanStep(int direction)
+        {
+            var b = Base;
+            return direction > 0 ? b < Layout.MaxOffset - 0.5f : direction < 0 && b > 0.5f;
+        }
+
+        /// <summary>Whether content from <paramref name="startDp"/> to <paramref name="endDp"/> is in view now.</summary>
+        public bool IsRangeShown(float startDp, float endDp) =>
+            startDp >= OffsetDp - 0.5f && endDp <= OffsetDp + Layout.ViewportDp + 0.5f;
+
+        /// <summary>Scrolls the least distance that shows content from <paramref name="startDp"/> to
+        /// <paramref name="endDp"/> (its start, if it is longer than the view).</summary>
+        public void Reveal(float startDp, float endDp)
+        {
+            if (IsDragging) return;
+            var b = Base;
+            var target = b;
+            if (startDp < b || endDp - startDp > Layout.ViewportDp) target = startDp;
+            else if (endDp > b + Layout.ViewportDp) target = endDp - Layout.ViewportDp;
+            target = _motion.Clamp(target);
+            if (Math.Abs(target - b) > 0.5f) AnimateTo(target);
+        }
 
         public bool Execute(in FrameCommand command)
         {

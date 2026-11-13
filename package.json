@@ -13,7 +13,7 @@
     "type": "git",
     "url": "https://github.com/DavidWilliamHunter/UiFrames.git"
   },
-  "documentationUrl": "https://github.com/DavidWilliamHunter/UiFrames/blob/main/README.md",
+  "documentationUrl": "https://github.com/DavidWilliamHunter/UiFrames/blob/main/Documentation~/Usage.md",
   "changelogUrl": "https://github.com/DavidWilliamHunter/UiFrames/blob/main/CHANGELOG.md",
   "licensesUrl": "https://github.com/DavidWilliamHunter/UiFrames/blob/main/LICENSE.md",
   "keywords": [
@@ -29,5 +29,12 @@
     "com.unity.inputsystem": "1.20.0",
     "com.unity.ugui": "2.0.0",
     "com.unity.modules.uielements": "1.0.0"
-  }
+  },
+  "samples": [
+    {
+      "displayName": "Demo Scenes",
+      "description": "The same drawer, card strip, card deck and vertical strip in UI Toolkit (tagged in UXML/USS) and in uGUI (tagged with UiFrameClasses and a UiFrameStyleSheet), driven by mouse, keyboard and gamepad. Build the scenes from Threads > UI Frames > Build Demo Scenes.",
+      "path": "Samples~/Demo"
+    }
+  ]
 }

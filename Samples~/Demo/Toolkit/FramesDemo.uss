@@ -1,0 +1,104 @@
+/* Behaviour is set only here, with marker classes (in the UXML) and --uf-* custom properties. */
+
+.photos {
+    --uf-snap: card;
+    --uf-deceleration: 0.135;
+    height: 170px;
+}
+
+.deck {
+    --uf-deck-step: card;
+    --uf-visible-cards: 3;
+    --uf-duration: 180ms;
+    /* Exactly three cards: 3 × 160 + 2 × 12 gap. */
+    width: 504px;
+    height: 150px;
+}
+
+.list {
+    --uf-axis: vertical;
+    height: 200px;
+    width: 504px;
+}
+
+.menu {
+    --uf-edge: auto;
+    --uf-duration: 220ms;
+    --uf-easing: ease-out;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 280px;
+    padding: 16px;
+    background-color: rgb(38, 44, 58);
+}
+
+/* The handle sticks out on the right, so auto resolves to the left edge. */
+.menu-handle {
+    position: absolute;
+    right: -44px;
+    top: 45%;
+    width: 44px;
+    height: 64px;
+    background-color: rgb(38, 44, 58);
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+    justify-content: center;
+    align-items: center;
+}
+
+/* State classes set by the frames and the keyboard navigator. */
+.menu.uf-dragging { background-color: rgb(48, 56, 74); }
+
+/* uf-selected, uf-entered and uf-editing look as in the package's UiFrames-Theme.uss (added by
+   the runner). Controls show the Unity theme's focus ring; make it obvious. */
+.card Button:focus, .menu Button:focus, .card Toggle:focus, .card Slider:focus {
+    border-width: 3px;
+    border-color: rgb(255, 196, 64);
+}
+/* The drawer is selected while closed: light up its handle. */
+.menu.uf-selected .menu-handle { background-color: rgb(255, 196, 64); }
+.menu.uf-selected .menu-handle-label { color: rgb(22, 26, 34); }
+
+/* ---- Plain looks ---- */
+
+.screen {
+    flex-grow: 1;
+    padding: 16px 16px 16px 72px;
+    background-color: rgb(22, 26, 34);
+}
+
+.header { flex-direction: row; justify-content: space-between; align-items: center; }
+.title { font-size: 22px; -unity-font-style: bold; color: white; }
+.status { color: rgb(255, 196, 64); font-size: 14px; }
+.help { white-space: normal; color: rgb(170, 180, 200); margin: 6px 0 4px 0; max-width: 900px; }
+.section { color: rgb(200, 210, 230); margin-top: 12px; margin-bottom: 4px; }
+
+.card {
+    width: 160px;
+    height: 150px;
+    margin-right: 12px;
+    padding: 10px;
+    border-radius: 10px;
+    background-color: rgb(58, 92, 140);
+    justify-content: space-between;
+}
+
+.deck-card { background-color: rgb(120, 70, 130); justify-content: center; align-items: center; }
+
+.card-title { font-size: 18px; color: white; white-space: normal; }
+.nodrag { height: 60px; background-color: rgba(0, 0, 0, 0.3); justify-content: center; }
+
+.row {
+    height: 40px;
+    padding-left: 10px;
+    justify-content: center;
+    color: white;
+    background-color: rgb(46, 54, 70);
+    border-bottom-width: 1px;
+    border-bottom-color: rgb(22, 26, 34);
+}
+
+.menu-title { font-size: 18px; color: white; margin-bottom: 12px; }
+.menu-note { color: rgb(170, 180, 200); white-space: normal; margin-top: 12px; }
+.menu-handle-label { font-size: 26px; color: white; }

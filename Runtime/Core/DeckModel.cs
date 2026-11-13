@@ -84,9 +84,16 @@ namespace Threads.UiFrames
             }
         }
 
-        /// <summary>Whether card <paramref name="i"/> should be shown: always while moving
-        /// (cards are only cut off during an animation), and only if whole at rest.</summary>
-        public bool IsCardShownAtRest(int i) => IsMoving || Layout.IsFullyVisible(i, OffsetDp);
+        /// <summary>Whether card <paramref name="i"/> should be shown: always while moving (cards are
+        /// only cut off during an animation); at rest, unless the view would cut it off. Cards wholly
+        /// outside the view stay shown (they are clipped anyway) so keyboard and gamepad navigation
+        /// can still move focus to them, which steps the deck.</summary>
+        public bool IsCardShownAtRest(int i)
+        {
+            if (IsMoving || Layout.IsFullyVisible(i, OffsetDp)) return true;
+            var viewEnd = OffsetDp + Layout.ViewportDp;
+            return Layout.End(i) <= OffsetDp + 0.5f || Layout.Start(i) >= viewEnd - 0.5f;
+        }
 
         public void GoTo(int index, bool animate = true)
         {
@@ -95,6 +102,24 @@ namespace Threads.UiFrames
             SetIndex(index);
             if (animate) _motion.AnimateTo(RestPoint(index), Options.DurationSeconds, Options.Easing);
             else { _motion.JumpTo(RestPoint(index)); Settled?.Invoke(); }
+        }
+
+        /// <summary>Whether a step (+1 / −1) would move the deck.</summary>
+        public bool CanStep(int direction) => direction > 0 ? Index < LastIndex : direction < 0 && Index > 0;
+
+        /// <summary>Steps the least distance that shows card <paramref name="card"/> whole.</summary>
+        public void Reveal(int card)
+        {
+            if (card < 0 || card >= Count || IsDragging) return;
+            if (Layout.IsFullyVisible(card, RestPoint(Index))) return;
+            if (card < Index) { GoTo(card); return; }
+            for (var j = Index + 1; j <= LastIndex; j++)
+            {
+                if (!Layout.IsFullyVisible(card, RestPoint(j))) continue;
+                GoTo(j);
+                return;
+            }
+            GoTo(Math.Min(card, LastIndex));
         }
 
         public void Next() => GoTo(Index + StepSize);

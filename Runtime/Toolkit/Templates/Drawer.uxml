@@ -1,0 +1,9 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <!-- A left drawer, laid out open against the left edge; the handle sticks out on the right, so
+         --uf-edge: auto finds the edge. Put its contents before the handle. Needs UiFrames.uss. -->
+    <ui:VisualElement name="drawer" class="uf-drawer" style="left: 0; top: 0; bottom: 0; width: 280px; padding: 16px; background-color: rgb(38, 44, 58);">
+        <ui:Button name="item-1" text="Item 1" />
+        <ui:Button name="item-2" text="Item 2" />
+        <ui:VisualElement name="handle" class="uf-drawer-handle" style="position: absolute; right: -44px; top: 45%; width: 44px; height: 64px; background-color: rgb(38, 44, 58);" />
+    </ui:VisualElement>
+</ui:UXML>

@@ -46,6 +46,10 @@ namespace Threads.UiFrames
         public static readonly FrameCommandId DragEnd = new FrameCommandId("drag-end");
         /// <summary>The direct manipulation was cancelled; the frame settles where it was.</summary>
         public static readonly FrameCommandId DragCancel = new FrameCommandId("drag-cancel");
+        /// <summary>Bring <see cref="FrameCommand.Payload"/> (an <see cref="IFrameElement"/> inside the
+        /// frame, usually the element that just got UI focus) into view: a strip scrolls the least it
+        /// can, a deck steps to its card, a closed drawer opens.</summary>
+        public static readonly FrameCommandId Reveal = new FrameCommandId("reveal");
 
         public bool Equals(FrameCommandId other) => string.Equals(Name, other.Name, StringComparison.Ordinal);
         public override bool Equals(object obj) => obj is FrameCommandId other && Equals(other);
@@ -94,6 +98,7 @@ namespace Threads.UiFrames
         public static FrameCommand ScrollBy(float deltaDp) => new FrameCommand(FrameCommandId.ScrollBy, deltaDp: deltaDp);
         public static FrameCommand DragMove(float deltaDp) => new FrameCommand(FrameCommandId.DragMove, deltaDp: deltaDp);
         public static FrameCommand DragEnd(float velocityDps) => new FrameCommand(FrameCommandId.DragEnd, velocityDps: velocityDps);
+        public static FrameCommand Reveal(IFrameElement element) => new FrameCommand(FrameCommandId.Reveal, payload: element);
 
         public override string ToString()
         {

@@ -1,7 +1,7 @@
 {
     "name": "Threads.UiFrames.Toolkit",
     "rootNamespace": "Threads.UiFrames.Toolkit",
-    "references": ["Threads.UiFrames"],
+    "references": ["Threads.UiFrames", "Threads.UiFrames.Unity"],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

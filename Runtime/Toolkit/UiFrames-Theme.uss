@@ -1,0 +1,22 @@
+/* UI Frames default look for the keyboard/gamepad state classes (optional: add it after
+   UiFrames.uss, or let UiFramesRunner add it as "Toolkit Theme"). Override in your own sheets.
+   UI Toolkit has no outline property, so borders are used: give framed elements a fixed size
+   (as cards usually have) so the border does not change their layout. */
+
+/* The keyboard selection: a frame, a card or a control. */
+.uf-selected {
+    border-width: 4px;
+    border-color: rgb(255, 196, 64);
+}
+
+/* A frame or card the keyboard is inside (Esc leaves it). */
+.uf-entered {
+    border-width: 2px;
+    border-color: rgba(255, 196, 64, 0.45);
+}
+
+/* A control taking the arrows itself (Enter on a slider or field). */
+.uf-editing {
+    border-width: 4px;
+    border-color: rgb(255, 128, 32);
+}

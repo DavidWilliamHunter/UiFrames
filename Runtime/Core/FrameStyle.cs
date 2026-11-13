@@ -31,6 +31,11 @@ namespace Threads.UiFrames
         All = Touch | Pointer | Navigation,
     }
 
+    /// <summary>How keyboard/gamepad navigation treats a frame (<c>--uf-navigation</c>). Levels: the
+    /// frame is one item; Enter goes in (to its cards, then a card's controls), Esc comes out.
+    /// Flat: the frame is transparent and its controls are items of the level around it.</summary>
+    public enum FrameNavigationMode { Levels, Flat }
+
     /// <summary>Easing curves available through <c>--uf-easing</c>.</summary>
     public enum FrameEasing { Linear, EaseIn, EaseOut, EaseInOut }
 
@@ -125,6 +130,15 @@ namespace Threads.UiFrames
             return true;
         }
 
+        /// <summary>Same properties with equal values.</summary>
+        public bool SameAs(FrameStyle other)
+        {
+            if (other == null || other._values.Count != _values.Count) return false;
+            foreach (var kv in _values)
+                if (!other._values.TryGetValue(kv.Key, out var v) || !Equals(v, kv.Value)) return false;
+            return true;
+        }
+
         public FrameStyle Clone()
         {
             var c = new FrameStyle();
@@ -180,8 +194,29 @@ namespace Threads.UiFrames
         /// <c>touch</c>, <c>pointer</c>, <c>navigation</c>.</summary>
         public static readonly FrameProperty<FrameInputKinds> Input = new FrameProperty<FrameInputKinds>("--uf-input", FrameStyleParser.TryParseInput);
 
+        /// <summary>Strips and decks: size the cards along the axis so exactly this many fit in the
+        /// view (gaps kept). A deck then always rests showing whole cards, whatever the screen size.</summary>
+        public static readonly FrameProperty<int> VisibleCards = new FrameProperty<int>("--uf-visible-cards",
+            (string v, out int n, out string e) =>
+            {
+                e = "must be a whole number of cards, 1 or more.";
+                return int.TryParse(v, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out n) && n >= 1;
+            });
+
+        /// <summary>How far one arrow key moves a slider being adjusted, as a fraction of its range
+        /// (UI Toolkit sliders; default 0.1 as uGUI). Set it on the frame around the slider.</summary>
+        public static readonly FrameProperty<float> ArrowStep = new FrameProperty<float>("--uf-arrow-step",
+            (string v, out float r, out string e) =>
+            {
+                e = "must be a fraction of the range, above 0 and at most 1.";
+                return FrameStyleParser.TryParseNumber(v, out r) && r > 0f && r <= 1f;
+            });
+
+        public static readonly FrameProperty<FrameNavigationMode> Navigation = FrameStyleParser.Keyword("--uf-navigation",
+            ("levels", FrameNavigationMode.Levels), ("flat", FrameNavigationMode.Flat));
+
         /// <summary>Properties that every frame can use.</summary>
-        public static readonly FrameProperty[] Common = { Duration, Easing, Input };
+        public static readonly FrameProperty[] Common = { Duration, Easing, Input, Navigation, ArrowStep };
     }
 
     /// <summary>The marker and state classes of the built-in frames.</summary>
@@ -200,6 +235,16 @@ namespace Threads.UiFrames
         public const string Open = "uf-open";
         public const string Dragging = "uf-dragging";
         public const string Focused = "uf-focused";
+        /// <summary>The keyboard/gamepad selection: a frame, card or control.</summary>
+        public const string Selected = "uf-selected";
+        /// <summary>A frame or card the keyboard has entered (Enter); Esc leaves it.</summary>
+        public const string Entered = "uf-entered";
+        /// <summary>A control taking the arrow keys itself (a slider being adjusted, a field being edited).</summary>
+        public const string Editing = "uf-editing";
+        /// <summary>Set on strips and decks from <c>--uf-axis</c>, so USS can lay out their cards
+        /// (USS cannot select on a custom property).</summary>
+        public const string Horizontal = "uf-horizontal";
+        public const string Vertical = "uf-vertical";
     }
 
     /// <summary>Helpers for writing property parsers.</summary>

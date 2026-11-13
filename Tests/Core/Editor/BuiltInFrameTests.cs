@@ -64,7 +64,7 @@ namespace Threads.UiFrames.Tests
             var el = new FakeFrameElement("drawer", 0, 0, 600, 280, FrameTags.Drawer);
             var d = Create(el, StyleOf.With(FrameProperties.Edge, FrameEdge.Bottom));
             Assert.AreEqual(FrameAxis.Vertical, d.DragAxis);
-            Assert.AreEqual(25f, d.ToCommandDelta(3f, 25f), "dragging up opens a bottom drawer");
+            Assert.AreEqual(25f, d.ToCommandDelta(3f, -25f), "dragging up (y down: negative) opens a bottom drawer");
         }
 
         [TestCase(285f, 300f, FrameEdge.Left)]   // handle sticks out on the right
@@ -141,7 +141,7 @@ namespace Threads.UiFrames.Tests
             var s = (StripFrame)Create(el, StyleOf.With(FrameProperties.Axis, FrameAxis.Vertical));
             Assert.AreEqual(FrameAxis.Vertical, s.DragAxis);
             Assert.AreEqual(700f, s.Model.MaxOffsetDp);
-            s.Execute(FrameCommand.DragMove(s.ToCommandDelta(0f, 50f))); // finger moves up (y up)
+            s.Execute(FrameCommand.DragMove(s.ToCommandDelta(0f, -50f))); // finger moves up (local y down)
             Assert.AreEqual(-50f, ((FakeFrameElement)s.Content).TranslationY, "content moves up (y down)");
         }
 
@@ -166,7 +166,7 @@ namespace Threads.UiFrames.Tests
             Run(d);
             Assert.AreEqual(1, d.Index);
             Assert.AreEqual(-100f, content.TranslationX);
-            Assert.IsFalse(Card(content, 0).Visible);
+            Assert.IsTrue(Card(content, 0).Visible, "wholly out of view: clipped, still focusable");
             Assert.IsTrue(Card(content, 2).Visible);
             Assert.IsFalse(Card(content, 3).Visible);
         }
@@ -200,5 +200,98 @@ namespace Threads.UiFrames.Tests
         }
 
         static FakeFrameElement Card(FakeFrameElement content, int i) => (FakeFrameElement)content.Children[i];
+
+        // ---- --uf-visible-cards and whole cards ----
+
+        /// <summary>What a layout group does after a resize: cards one after another with a gap.</summary>
+        static void Reflow(FakeFrameElement content, float gap)
+        {
+            var x = 0f;
+            foreach (FakeFrameElement c in content.Children)
+            {
+                var r = c.LayoutRectDp;
+                c.LayoutRectDp = new FrameRect(x, r.Y, r.Width, r.Height);
+                x += r.Width + gap;
+            }
+        }
+
+        static FakeFrameElement GappedDeck(float viewport, int count, float card, float gap)
+        {
+            var root = new FakeFrameElement("deck", 0, 0, viewport, 200, FrameTags.CardDeck);
+            var content = root.Add(new FakeFrameElement("cards", 0, 0, count * (card + gap), 200, FrameTags.Cards));
+            for (var i = 0; i < count; i++) content.Add(new FakeFrameElement("card" + i, i * (card + gap), 0, card, 200));
+            return root;
+        }
+
+        [Test]
+        public void VisibleCardsSizesCardsToFillTheView()
+        {
+            var el = GappedDeck(500f, 8, 100f, 12f);
+            var d = (DeckFrame)Create(el, StyleOf.With(FrameProperties.VisibleCards, 3));
+            var content = (FakeFrameElement)d.Content;
+            Assert.AreEqual((500f - 2 * 12f) / 3f, content.Children[0].LayoutRectDp.Width, 0.01f, "(view − 2 gaps) / 3");
+            Reflow(content, 12f);
+            d.OnLayoutChanged();
+            Assert.AreEqual(3, d.Model.VisibleCount, "exactly three whole cards");
+            d.OnLayoutChanged();
+            Assert.AreEqual((500f - 24f) / 3f, content.Children[0].LayoutRectDp.Width, 0.01f, "stable: nothing more to do");
+        }
+
+        [Test]
+        public void DeckThatCannotRestOnWholeCardsIsReported()
+        {
+            var warnings = new System.Collections.Generic.List<string>();
+            _env.Warn = warnings.Add;
+            Create(GappedDeck(250f, 6, 100f, 0f)); // 2.5 cards
+            Assert.AreEqual(1, warnings.Count);
+            StringAssert.Contains("2.5 cards", warnings[0]);
+            StringAssert.Contains("--uf-visible-cards", warnings[0]);
+            warnings.Clear();
+            Create(GappedDeck(312f, 6, 100f, 6f)); // 3 cards and 2 gaps
+            CollectionAssert.IsEmpty(warnings);
+        }
+
+        // ---- Re-applying an unchanged style or layout leaves animations alone ----
+
+        [Test]
+        public void SameStyleAgainDoesNotInterruptADeckStep()
+        {
+            var style = StyleOf.With(FrameProperties.DeckStep, FrameDeckStep.Card);
+            var d = (DeckFrame)Create(Cards(FrameTags.CardDeck, 6), style);
+            d.Execute(FrameCommand.Next);
+            _clock.AdvanceMs(60);
+            d.Update();
+            var mid = d.Model.OffsetDp;
+            d.ApplyStyle(style.Clone()); // UI Toolkit re-resolves styles when a state class changes
+            d.OnLayoutChanged();         // and a rescan or geometry event may follow
+            Assert.IsTrue(d.Model.IsMoving);
+            Assert.AreEqual(mid, d.Model.OffsetDp, 1e-3f);
+            Run(d);
+            Assert.AreEqual(100f, d.Model.OffsetDp, 1e-3f);
+        }
+
+        [Test]
+        public void SameExtentDoesNotRestartTheDrawer()
+        {
+            var el = new FakeFrameElement("drawer", 0, 0, 280, 600, FrameTags.Drawer);
+            var d = (DrawerFrame)Create(el);
+            d.Execute(FrameCommand.Open);
+            _clock.AdvanceMs(110);
+            d.Update();
+            var mid = d.Model.Progress;
+            d.OnLayoutChanged();
+            _clock.AdvanceMs(110);
+            d.Update();
+            Assert.AreEqual(1f, d.Model.Progress, 1e-4f, "finished on time");
+            Assert.Greater(1f, mid);
+        }
+
+        [Test]
+        public void ChangedStyleStillApplies()
+        {
+            var s = (StripFrame)Create(Cards(FrameTags.CardStrip, 10));
+            s.ApplyStyle(StyleOf.With(FrameProperties.Snap, FrameSnap.Card));
+            Assert.AreEqual(FrameSnap.Card, s.Model.Options.Snap);
+        }
     }
 }

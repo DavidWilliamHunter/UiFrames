@@ -1,0 +1,16 @@
+{
+    "name": "Threads.UiFrames.Unity",
+    "rootNamespace": "Threads.UiFrames.Unity",
+    "references": [
+        "Threads.UiFrames"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

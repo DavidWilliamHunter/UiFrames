@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 83e8145c8fe298c4b8e6d2b7faf4dbfd, type: 3}
+  m_Name: DemoFrames
+  m_EditorClassIdentifier: Threads.UiFrames.UGUI::Threads.UiFrames.UGUI.UiFrameStyleSheet
+  rules:
+  - selector: .photos
+    declarations:
+    - property: --uf-snap
+      value: card
+    - property: --uf-deceleration
+      value: 0.135
+  - selector: .uf-card-deck
+    declarations:
+    - property: --uf-deck-step
+      value: card
+    - property: --uf-duration
+      value: 180ms
+    - property: --uf-visible-cards
+      value: 3
+  - selector: .list
+    declarations:
+    - property: --uf-axis
+      value: vertical
+  - selector: .uf-drawer
+    declarations:
+    - property: --uf-edge
+      value: auto
+    - property: --uf-duration
+      value: 220ms

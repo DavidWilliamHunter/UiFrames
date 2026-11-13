@@ -1,0 +1,24 @@
+{
+    "name": "Threads.UiFrames.Demo.Editor",
+    "rootNamespace": "Threads.UiFrames.Demo.Editor",
+    "references": [
+        "Threads.UiFrames",
+        "Threads.UiFrames.Toolkit",
+        "Threads.UiFrames.UGUI",
+        "Threads.UiFrames.Input",
+        "Threads.UiFrames.Demo",
+        "Unity.InputSystem",
+        "UnityEngine.UI"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

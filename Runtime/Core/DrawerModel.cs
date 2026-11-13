@@ -52,7 +52,9 @@ namespace Threads.UiFrames
             get => _extent;
             set
             {
-                _extent = Math.Max(0f, value);
+                value = Math.Max(0f, value);
+                if (Math.Abs(value - _extent) < 0.01f && _motion.Max == _extent) return; // unchanged: leave any animation alone
+                _extent = value;
                 _motion.SetBounds(0f, _extent);
                 // Layout changed (e.g. rotation): keep the open/closed state, retarget any animation.
                 if (_motion.State == MotionState.Idle) _motion.JumpTo(IsOpen ? _extent : 0f);

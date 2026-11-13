@@ -1,0 +1,14 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <!-- A card deck showing three cards: its width is 3 cards plus 2 gaps (3 × 150 + 2 × 12),
+         so it always rests on whole cards. Needs UiFrames.uss. -->
+    <ui:VisualElement name="card-deck" class="uf-card-deck" style="width: 474px; height: 150px;">
+        <ui:VisualElement class="uf-cards">
+            <ui:VisualElement name="card-a" style="width: 150px; height: 150px; margin-right: 12px; background-color: rgb(120, 70, 130);" />
+            <ui:VisualElement name="card-b" style="width: 150px; height: 150px; margin-right: 12px; background-color: rgb(120, 70, 130);" />
+            <ui:VisualElement name="card-c" style="width: 150px; height: 150px; margin-right: 12px; background-color: rgb(120, 70, 130);" />
+            <ui:VisualElement name="card-d" style="width: 150px; height: 150px; margin-right: 12px; background-color: rgb(120, 70, 130);" />
+            <ui:VisualElement name="card-e" style="width: 150px; height: 150px; margin-right: 12px; background-color: rgb(120, 70, 130);" />
+            <ui:VisualElement name="card-f" style="width: 150px; height: 150px; margin-right: 12px; background-color: rgb(120, 70, 130);" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

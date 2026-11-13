@@ -1,0 +1,46 @@
+.hstrip {
+    --uf-snap: card;
+    --uf-duration: 100ms;
+    --uf-easing: linear;
+    --uf-arrow-step: 0.2;
+    position: absolute;
+    left: 100px;
+    top: 20px;
+    width: 300px;
+    height: 100px;
+    overflow: hidden;
+}
+.uf-cards { flex-direction: row; flex-shrink: 0; align-self: flex-start; }
+.uf-vertical > .uf-cards { flex-direction: column; }
+.card { width: 100px; height: 100px; flex-shrink: 0; }
+.btn { position: absolute; left: 10px; top: 10px; width: 80px; height: 40px; margin: 0; }
+.slider { width: 90px; margin: 0; }
+
+/* No --uf-axis class in the markup: the frame sets uf-vertical itself. */
+.vstrip {
+    --uf-axis: vertical;
+    --uf-duration: 100ms;
+    position: absolute;
+    left: 100px;
+    top: 200px;
+    width: 100px;
+    height: 100px;
+    overflow: hidden;
+}
+.row { width: 100px; height: 50px; flex-shrink: 0; }
+
+.tstrip { width: 300px; height: 100px; overflow: hidden; }
+.scaled { position: absolute; left: 450px; top: 20px; width: 300px; height: 100px; scale: 0.5 0.5; transform-origin: 0 0; }
+.rotated { position: absolute; left: 600px; top: 200px; width: 300px; height: 100px; rotate: 90deg; transform-origin: 0 0; }
+
+.drawer {
+    --uf-edge: "right";
+    --uf-duration: 100ms;
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 150px;
+    height: 300px;
+}
+.d-item { width: 120px; height: 30px; }
+.handle { position: absolute; left: -30px; top: 100px; width: 30px; height: 40px; }

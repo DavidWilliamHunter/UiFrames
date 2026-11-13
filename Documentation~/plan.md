@@ -94,3 +94,73 @@ Other packages can add their own tags and behaviours. The built-in drawer, strip
 - Use a robocopy of the project in the scratchpad and run Unity `-batchmode -runTests` for EditMode and PlayMode, with coverage that includes PlayMode.
 - Run each sample scene in the Editor with mouse, keyboard, gamepad and simulated touch. Run on an Android device for real touch.
 - Check the core assembly builds with TouchController removed: the touch assembly drops out and the other assemblies still compile and pass their tests.
+
+## Status (2026-11-13)
+
+**Done (uncommitted in the package repo):**
+- Phase 1 (core plus the extensibility API).
+- Phase 2 and Phase 3 (UI Toolkit and uGUI adapters).
+- Phase 4 mouse and keyboard/gamepad: `ToolkitPointerController`, `UguiPointerController` and `FrameNavigationController`, sharing the core's `FramePointerTracker` and `FrameSet`.
+- Phase 6 demo: both scenes, built by Threads > UI Frames > Build Demo Scenes.
+
+**Tests:** 137 EditMode and 21 PlayMode tests pass.
+
+**Spike results:**
+- UI Toolkit `CustomStyleProperty<string>` reads unquoted keywords and quoted strings.
+- A captured pointer's events go to the capturing element without passing the root's trickle-down. The pointer controller also watches the press path at target phase.
+- The default controls need a theme (`unity-theme://default`) to have a size.
+
+**Next:**
+- Touch through TouchController (Phase 4 touch, Phase 5 joystick views).
+- The remaining touch spikes: the on-screen keyboard and `:hover`.
+- Device tests.
+
+### Update (2026-11-13, later)
+
+All three gaps the user reviewed are fixed:
+1. **Focus:** frames follow the UI's own focus and navigation, through `FrameFocusFollower` with one focus host per UI system. Focus jumps when needed:
+   - out-of-view focus moves to a control that is in view;
+   - opening a drawer moves focus into it, and closing it gives focus back;
+   - F6 moves focus into the next frame.
+
+   Our action map no longer binds arrows or Submit.
+2. **Axis classes:** frames set `uf-horizontal`/`uf-vertical` from `--uf-axis`.
+3. **Transforms:** pointer motion is measured in each frame's local space, and translation follows the frame's own axes. Scaled, rotated and world-space UI is covered by tests.
+
+**Tests:** 153 EditMode and 35 PlayMode tests pass.
+
+### Update: keyboard navigation in levels (2026-11-13)
+
+User decisions: a package default with `--uf-navigation: flat` to opt out; trivial levels are skipped; Tab moves to the next item in the level.
+
+`FrameNavigator`, one per UI root, replaces `FrameFocusFollower`:
+- **Levels:** frames → cards → controls. Enter goes in, Esc comes out.
+- **Controls:** sliders and fields take the arrows only after Enter.
+- **Selection:**
+  - it follows clicks and scrolling;
+  - it is shown with the `uf-selected`, `uf-entered` and `uf-editing` classes;
+  - closed drawers are unreachable.
+- **UI Toolkit:** keys are read from the Input System through `FrameNavigationController.KeyNavigators`, because the panel did not deliver navigation events in tests.
+
+**Tests:**
+- Both demo scenes were smoke-tested with a simulated keyboard. The test lives in the scratch project only.
+- 158 EditMode and 39 PlayMode tests pass.
+
+### Release 0.1.0 (2026-11-13)
+
+**Items 1–11 of the post-demo review are done:**
+1. key repeat;
+2. the UI Toolkit input finding (no EventSystem means no navigation events, so keys come from the Input System);
+3. automatic rescan, with style and layout re-application made idempotent;
+4. state visuals;
+5. setup warnings;
+6. `--uf-visible-cards`;
+7. runner events;
+8. factory and menus;
+9. keyboard-flow tests;
+10. nested suppression, `--uf-arrow-step` and the `IFrameNavigationHost` split;
+11. `Usage.md`.
+
+**Tests:** 164 EditMode and 52 PlayMode tests pass.
+
+**Next:** touch through TouchController (Phase 4 touch, Phase 5 joystick views).

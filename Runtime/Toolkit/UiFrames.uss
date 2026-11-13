@@ -1,0 +1,30 @@
+/* UI Frames defaults. Add this sheet to your UIDocument (or let UiFramesRunner add it).
+   Behaviour comes from the marker classes and --uf-* custom properties; this file only sets
+   the layout the frames need. Override anything in your own sheets. */
+
+/* A drawer is laid out in its OPEN position against its edge; the frame slides it off. */
+.uf-drawer {
+    position: absolute;
+}
+
+/* Strips and decks clip their cards; the content row is moved by the frame. */
+.uf-card-strip,
+.uf-card-deck {
+    overflow: hidden;
+}
+
+.uf-card-strip > .uf-cards,
+.uf-card-deck > .uf-cards {
+    flex-direction: row;
+    flex-shrink: 0;
+    align-self: flex-start;
+}
+
+/* Frames set uf-horizontal / uf-vertical from --uf-axis (USS cannot select on a custom property). */
+.uf-vertical > .uf-cards {
+    flex-direction: column;
+}
+
+.uf-cards > * {
+    flex-shrink: 0;
+}

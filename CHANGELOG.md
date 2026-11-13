@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.1.0] - unreleased
+## [0.1.0] - 2026-11-13
 
 ### Added
 - Package scaffold: core, UI Toolkit, uGUI, Input and optional TouchController assemblies.
@@ -9,3 +9,24 @@
 - Open command ids (`FrameCommandId`) so packages can add their own commands.
 - Built-in kinds: drawer (`uf-drawer`), card strip (`uf-card-strip`) and card deck (`uf-card-deck`), with plain C# models (`AxisMotion`, `DrawerModel`, `StripModel`, `DeckModel`).
 - Testing: `ManualClock`, `FakeFrameElement`.
+- `FrameSet` (live frames, keyboard focus with `uf-focused`, command bubbling to outer frames), `VelocityTracker`, and `FramePointerTracker` (slop, axis-locked frame choice, release velocity, handle clicks, wheel) shared by both UI systems.
+- UI Toolkit: `ToolkitFrameBinder` (marker classes, `--*` custom properties via `CustomStyleResolvedEvent`, geometry via `GeometryChangedEvent`, `Rescan()`), `ToolkitPointerController` (mouse/pen; a drag from a button moves the frame and the button does not click), and `UiFrames.uss` defaults.
+- uGUI: `UiFrameClasses` (class list, inline style, state-class events), `UiFrameStyleSheet` asset (rules with class selectors), `UguiFrameBinder` and `UguiPointerController` (drags hand off to outer ScrollRects across the frame's axis).
+- `FrameNavigationController`: keyboard and gamepad (arrows/d-pad, Page Up/Down/shoulders, Home/End, Enter/Y, Esc/B, F6/Select) on Input System actions; replaceable action map.
+- `UiFramesRunner`: default wiring for UI Toolkit documents and uGUI roots; `Startup(registry)` for custom kinds.
+- `UnityFrameHost`: the one place Unity's clock and screen density are read.
+- Demo sample: the same frames in UI Toolkit and uGUI (Threads > UI Frames > Build Demo Scenes).
+- Keyboard/gamepad navigation in levels (`FrameNavigator`): frames → cards → controls, Enter in, Esc out, Tab within a level, sliders and fields adjusted only after Enter, trivial levels skipped, `Activated` for empty cards, selection following the mouse and clicks. State classes `uf-selected`, `uf-entered`, `uf-editing`; `--uf-navigation: levels|flat`. Hidden frame parts (a closed drawer) cannot take focus. UI Toolkit keys are read from the Input System so they work whether or not the panel delivers navigation events. Replaces the earlier focus follower and `--uf-focusable`.
+- Focus integration (`FrameFocusFollower`, `IFrameFocusHost`, `ToolkitFocusController`, `UguiFocusController`): frames follow the UI system's own focus and navigation (`reveal` command); focus jumps to a control in view when a frame moves it away, into a drawer when it opens and back when it closes. Plain strips and decks take focus themselves (`--uf-focusable`); drawer handles are focusable and toggle on Submit. `IFrameNavigable` lets custom kinds join in.
+- `FrameNavigationController` now only binds frame-level commands (page, home/end, toggle, close, cycle), leaving arrows/Submit/Cancel to the UI.
+- Pointer motion is measured in each frame's local space (`IFrameElement.ToLocalDeltaDp`), and translation follows the element's own axes: scaled, rotated and world-space frames follow the pointer 1:1. Command deltas are now local layout space (y down).
+- Strips and decks set `uf-horizontal` / `uf-vertical` from `--uf-axis`; no extra class is needed in markup.
+- Decks hide only cards the view would cut off at rest; cards wholly outside stay focusable.
+- Key repeat for keyboard/gamepad directions read from the Input System (UI Toolkit).
+- Run-time UI is found automatically (`FrameEnvironment.AutoRescanSeconds`); re-applying an unchanged style or layout no longer disturbs animations.
+- Setup warnings (missing `uf-cards`, mask, raycast target, layout group on the frame, drawer not absolute, deck not resting on whole cards).
+- `UiFrameStateVisual` (uGUI) and `UiFrames-Theme.uss` (UI Toolkit): default looks for `uf-selected`, `uf-entered`, `uf-editing`.
+- Runner events for designers: `onActivated`, `onSelectionChanged`, `onDrawerOpened`, `onDrawerClosed` (and C# events).
+- `UguiFrameFactory` and GameObject > UI Frames menus; UXML templates for UI Builder.
+- `--uf-visible-cards`, `--uf-arrow-step`; `IFrameNavigationHost` split from `IFrameFocusHost`.
+- `Documentation~/Usage.md`.

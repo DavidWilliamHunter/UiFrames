@@ -128,8 +128,8 @@ namespace Threads.UiFrames.Tests
 
         [TestCase(FrameEdge.Left, 10f, 0f, 10f)]
         [TestCase(FrameEdge.Right, 10f, 0f, -10f)]
-        [TestCase(FrameEdge.Bottom, 0f, 10f, 10f)]
-        [TestCase(FrameEdge.Top, 0f, 10f, -10f)]
+        [TestCase(FrameEdge.Bottom, 0f, -10f, 10f)]
+        [TestCase(FrameEdge.Top, 0f, -10f, -10f)]
         public void DrawerDelta(FrameEdge edge, float dx, float dy, float expected) =>
             Assert.AreEqual(expected, FrameAxisMath.DrawerDelta(edge, dx, dy));
 
@@ -137,7 +137,7 @@ namespace Threads.UiFrames.Tests
         public void ScrollDeltaRevealsLaterContent()
         {
             Assert.AreEqual(10f, FrameAxisMath.ScrollDelta(FrameAxis.Horizontal, -10f, 0f), "drag left");
-            Assert.AreEqual(10f, FrameAxisMath.ScrollDelta(FrameAxis.Vertical, 0f, 10f), "drag up (y up)");
+            Assert.AreEqual(10f, FrameAxisMath.ScrollDelta(FrameAxis.Vertical, 0f, -10f), "drag up (y down)");
         }
 
         [TestCase(30f, 0f, FrameEdge.Left)]

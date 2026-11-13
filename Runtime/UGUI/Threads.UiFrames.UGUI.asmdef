@@ -1,7 +1,7 @@
 {
     "name": "Threads.UiFrames.UGUI",
     "rootNamespace": "Threads.UiFrames.UGUI",
-    "references": ["Threads.UiFrames", "UnityEngine.UI"],
+    "references": ["Threads.UiFrames", "Threads.UiFrames.Unity", "UnityEngine.UI", "Unity.InputSystem"],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

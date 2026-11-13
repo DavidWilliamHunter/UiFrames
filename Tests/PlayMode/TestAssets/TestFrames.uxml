@@ -1,0 +1,39 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="TestFrames.uss" />
+    <ui:VisualElement name="strip" class="uf-card-strip hstrip">
+        <ui:VisualElement name="cards" class="uf-cards">
+            <ui:VisualElement class="card"><ui:Button name="b0" text="B0" class="btn" /></ui:VisualElement>
+            <ui:VisualElement class="card"><ui:Button name="b1" text="B1" class="btn" /></ui:VisualElement>
+            <ui:VisualElement class="card"><ui:Slider name="slider" low-value="0" high-value="10" value="5" class="slider" /></ui:VisualElement>
+            <ui:VisualElement class="card"><ui:Button name="b3" text="B3" class="btn" /></ui:VisualElement>
+            <ui:VisualElement class="card"><ui:Button name="b4" text="B4" class="btn" /></ui:VisualElement>
+            <ui:VisualElement class="card"><ui:Button name="b5" text="B5" class="btn" /></ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+    <ui:VisualElement name="vstrip" class="uf-card-strip vstrip">
+        <ui:VisualElement class="uf-cards">
+            <ui:VisualElement class="row" /><ui:VisualElement class="row" /><ui:VisualElement class="row" />
+            <ui:VisualElement class="row" /><ui:VisualElement class="row" /><ui:VisualElement class="row" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+    <ui:VisualElement name="scaled" class="scaled">
+        <ui:VisualElement name="sstrip" class="uf-card-strip tstrip">
+            <ui:VisualElement class="uf-cards">
+                <ui:VisualElement class="card" /><ui:VisualElement class="card" /><ui:VisualElement name="s-card" class="card" />
+                <ui:VisualElement class="card" /><ui:VisualElement class="card" /><ui:VisualElement class="card" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+    <ui:VisualElement name="rotated" class="rotated">
+        <ui:VisualElement name="rstrip" class="uf-card-strip tstrip">
+            <ui:VisualElement class="uf-cards">
+                <ui:VisualElement class="card" /><ui:VisualElement class="card" /><ui:VisualElement name="r-card" class="card" />
+                <ui:VisualElement class="card" /><ui:VisualElement class="card" /><ui:VisualElement class="card" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+    <ui:VisualElement name="drawer" class="uf-drawer drawer">
+        <ui:Button name="d-item" text="Item" class="d-item" />
+        <ui:VisualElement name="handle" class="uf-drawer-handle handle" />
+    </ui:VisualElement>
+</ui:UXML>
