@@ -116,9 +116,16 @@ namespace Threads.UiFrames
             if (s.Kind == ScopeKind.Cards)
             {
                 var step = Step(s.Frame.DragAxis, direction);
+                if (step == 0)
+                {
+                    // Across the axis: the frame may use it (a menu row changes its value).
+                    var across = direction == FrameNavDirection.Right || direction == FrameNavDirection.Down ? 1 : -1;
+                    s.Frame.Execute(FrameCommand.Adjust(across, s.Selected));
+                    return true;
+                }
                 var j = items.IndexOf(s.Selected) + step;
-                if (step != 0 && j >= 0 && j < items.Count) Select(items[j]);
-                return true; // across the axis or at an end: stay in this level
+                if (j >= 0 && j < items.Count) Select(items[j]);
+                return true; // at an end: stay in this level
             }
             var best = Nearest(items, s.Selected, direction);
             if (best != null) Select(best);

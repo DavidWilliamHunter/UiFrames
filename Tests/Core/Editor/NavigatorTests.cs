@@ -326,6 +326,65 @@ namespace Threads.UiFrames.Tests
         }
 
         [Test]
+        public void CrossAxisArrowsAdjustTheSelectedCard()
+        {
+            // A strip that records adjust commands, as a menu page would.
+            var el = new FakeFrameElement("menu", 0, 600, 300, 200, "test-menu");
+            var content = el.Add(new FakeFrameElement("rows", 0, 0, 300, 200, FrameTags.Cards));
+            content.Add(new FakeFrameElement("row0", 0, 0, 300, 50));
+            content.Add(new FakeFrameElement("row1", 0, 50, 300, 50));
+            var kind = new AdjustRecordingKind();
+            _registry.Add(kind);
+            var menu = Add<AdjustRecordingFrame>(_root, el, StyleOf.With(FrameProperties.Axis, FrameAxis.Vertical));
+            _nav.SelectElement(menu.Element);
+            _nav.Submit();
+            _nav.Move(FrameNavDirection.Down);
+            Assert.AreSame(content.Children[1], _nav.Selected);
+            Assert.IsTrue(_nav.Move(FrameNavDirection.Right));
+            Assert.IsTrue(_nav.Move(FrameNavDirection.Left));
+            CollectionAssert.AreEqual(new[] { "row1:+1", "row1:-1" }, menu.Adjusts);
+            Assert.AreSame(content.Children[1], _nav.Selected, "the selection stays");
+        }
+
+        [Test]
+        public void BuiltInStripsIgnoreAdjust()
+        {
+            _nav.Move(FrameNavDirection.Down);
+            _nav.Submit();
+            Assert.IsTrue(_nav.Move(FrameNavDirection.Up), "used (nothing moves)");
+            Assert.AreSame(Card(0), _nav.Selected);
+            Assert.AreEqual(0f, _strip.Model.OffsetDp);
+        }
+
+        sealed class AdjustRecordingKind : IFrameKind
+        {
+            public string MarkerClass => "test-menu";
+            public System.Collections.Generic.IReadOnlyList<FrameProperty> Properties => new FrameProperty[] { FrameProperties.Axis };
+            public IFrameBehaviour Create(FrameContext context) => new AdjustRecordingFrame(context);
+        }
+
+        sealed class AdjustRecordingFrame : CardFrameBase
+        {
+            public readonly List<string> Adjusts = new List<string>();
+            readonly StripModel _model;
+            public AdjustRecordingFrame(FrameContext c) : base(c) { _model = new StripModel(c.Clock); OnLayoutChanged(); }
+            protected override float OffsetDp => _model.OffsetDp;
+            public override bool IsMoving => _model.IsMoving;
+            public override bool CanStep(int direction) => _model.CanStep(direction);
+            public override void Update() => _model.Update();
+            protected override void ApplyModelStyle(FrameStyle style) { }
+            protected override void SetLayout(CardLayout layout) => _model.SetLayout(layout);
+            protected override void Reveal(FrameRect r, int card) => _model.Reveal(r.Start(Axis), r.End(Axis));
+            protected override bool IsCardRangeShown(FrameRect r, int card) => _model.IsRangeShown(r.Start(Axis), r.End(Axis));
+            protected override bool ExecuteModel(in FrameCommand command)
+            {
+                if (command.Id != FrameCommandId.Adjust) return _model.Execute(command);
+                Adjusts.Add($"{((IFrameElement)command.Payload).Name}:{(command.Index > 0 ? "+1" : "-1")}");
+                return true;
+            }
+        }
+
+        [Test]
         public void FlatFrameIsTransparent()
         {
             _strip.ApplyStyle(StyleOf.With(FrameProperties.Navigation, FrameNavigationMode.Flat));

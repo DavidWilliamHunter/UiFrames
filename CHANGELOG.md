@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.1.2] - preview
+
+### Added
+- `FrameCommandId.Adjust`: an arrow across a frame's axis at the cards level is sent to the frame (±1 and the selected card) instead of doing nothing. Built-in frames ignore it; UI Menus uses it so Left/Right change a menu row's value.
+
 ## [0.1.1] - preview (not yet tested on devices; release as 0.2.0 after device tests)
 
 ### Added

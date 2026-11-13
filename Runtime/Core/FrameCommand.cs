@@ -50,6 +50,11 @@ namespace Threads.UiFrames
         /// frame, usually the element that just got UI focus) into view: a strip scrolls the least it
         /// can, a deck steps to its card, a closed drawer opens.</summary>
         public static readonly FrameCommandId Reveal = new FrameCommandId("reveal");
+        /// <summary>Keyboard/gamepad arrow across the frame's axis while one of its cards is selected:
+        /// <see cref="FrameCommand.Index"/> is +1 (right or down) or −1 (left or up) and
+        /// <see cref="FrameCommand.Payload"/> is the card. Built-in frames ignore it; a menu page uses
+        /// it to change the selected row's value (Left/Right on a slider or cycler).</summary>
+        public static readonly FrameCommandId Adjust = new FrameCommandId("adjust");
 
         public bool Equals(FrameCommandId other) => string.Equals(Name, other.Name, StringComparison.Ordinal);
         public override bool Equals(object obj) => obj is FrameCommandId other && Equals(other);
@@ -99,6 +104,7 @@ namespace Threads.UiFrames
         public static FrameCommand DragMove(float deltaDp) => new FrameCommand(FrameCommandId.DragMove, deltaDp: deltaDp);
         public static FrameCommand DragEnd(float velocityDps) => new FrameCommand(FrameCommandId.DragEnd, velocityDps: velocityDps);
         public static FrameCommand Reveal(IFrameElement element) => new FrameCommand(FrameCommandId.Reveal, payload: element);
+        public static FrameCommand Adjust(int direction, IFrameElement card) => new FrameCommand(FrameCommandId.Adjust, index: direction, payload: card);
 
         public override string ToString()
         {
