@@ -168,6 +168,35 @@ namespace Threads.UiFrames.Tests
             Assert.AreEqual(150f, Frame<DrawerFrame>("drawer").Model.ExtentDp, 0.5f);
         }
 
+        [UnityTest]
+        public IEnumerator ButtonsInAHiddenPanelAreNotItems()
+        {
+            var panel = new VisualElement { name = "panel" };
+            var button = new Button { name = "hidden-button", text = "X" };
+            panel.Add(button);
+            Root.Add(panel);
+            yield return null;
+            var wrapped = _focus.FirstFocusable(_focus.Root, e => ReferenceEquals(e.Native, button));
+            Assert.IsTrue(_focus.IsControl(wrapped), "shown: an item");
+            panel.style.display = DisplayStyle.None;
+            yield return null;
+            Assert.IsFalse(_focus.IsControl(WrapOf(button)), "inside display: none, not an item");
+            panel.RemoveFromHierarchy();
+        }
+
+        IFrameElement WrapOf(VisualElement ve)
+        {
+            IFrameElement found = null;
+            void Walk(IFrameElement e)
+            {
+                if (found != null) return;
+                if (ReferenceEquals(e.Native, ve)) { found = e; return; }
+                foreach (var c in e.Children) Walk(c);
+            }
+            Walk(_focus.Root);
+            return found;
+        }
+
         [Test]
         public void ClosedRightDrawerIsTranslatedOff()
         {

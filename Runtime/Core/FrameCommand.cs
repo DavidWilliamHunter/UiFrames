@@ -55,6 +55,10 @@ namespace Threads.UiFrames
         /// <see cref="FrameCommand.Payload"/> is the card. Built-in frames ignore it; a menu page uses
         /// it to change the selected row's value (Left/Right on a slider or cycler).</summary>
         public static readonly FrameCommandId Adjust = new FrameCommandId("adjust");
+        /// <summary>Keyboard/gamepad Enter on a card with nothing inside to go to:
+        /// <see cref="FrameCommand.Payload"/> is the card. Sent to the card's frame (before the
+        /// navigator's <c>Activated</c> event); a menu page toggles, presses or opens the row.</summary>
+        public static readonly FrameCommandId Activate = new FrameCommandId("activate");
 
         public bool Equals(FrameCommandId other) => string.Equals(Name, other.Name, StringComparison.Ordinal);
         public override bool Equals(object obj) => obj is FrameCommandId other && Equals(other);
@@ -105,6 +109,7 @@ namespace Threads.UiFrames
         public static FrameCommand DragEnd(float velocityDps) => new FrameCommand(FrameCommandId.DragEnd, velocityDps: velocityDps);
         public static FrameCommand Reveal(IFrameElement element) => new FrameCommand(FrameCommandId.Reveal, payload: element);
         public static FrameCommand Adjust(int direction, IFrameElement card) => new FrameCommand(FrameCommandId.Adjust, index: direction, payload: card);
+        public static FrameCommand Activate(IFrameElement card) => new FrameCommand(FrameCommandId.Activate, payload: card);
 
         public override string ToString()
         {

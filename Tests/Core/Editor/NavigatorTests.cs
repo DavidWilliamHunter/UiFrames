@@ -347,6 +347,24 @@ namespace Threads.UiFrames.Tests
         }
 
         [Test]
+        public void EnterOnARowWithOnlyPointerControlsActivatesIt()
+        {
+            var el = new FakeFrameElement("menu", 0, 600, 300, 200, "test-menu");
+            var content = el.Add(new FakeFrameElement("rows", 0, 0, 300, 200, FrameTags.Cards));
+            var row = content.Add(new FakeFrameElement("row0", 0, 0, 300, 50));
+            row.Add(new FakeFrameElement("slider", 100, 10, 150, 30, FrameTags.PointerOnly) { Focusable = true });
+            _registry.Add(new AdjustRecordingKind());
+            var menu = Add<AdjustRecordingFrame>(_root, el, StyleOf.With(FrameProperties.Axis, FrameAxis.Vertical));
+            _nav.SelectElement(menu.Element);
+            _nav.Submit();
+            Assert.AreSame(row, _nav.Selected);
+            _nav.Submit();
+            Assert.AreSame(row, _nav.Selected, "the pointer-only slider is not a stop");
+            CollectionAssert.AreEqual(new[] { "row0:activate" }, menu.Adjusts);
+            CollectionAssert.AreEqual(new[] { row }, _activated, "the navigator's event too");
+        }
+
+        [Test]
         public void BuiltInStripsIgnoreAdjust()
         {
             _nav.Move(FrameNavDirection.Down);
@@ -378,6 +396,11 @@ namespace Threads.UiFrames.Tests
             protected override bool IsCardRangeShown(FrameRect r, int card) => _model.IsRangeShown(r.Start(Axis), r.End(Axis));
             protected override bool ExecuteModel(in FrameCommand command)
             {
+                if (command.Id == FrameCommandId.Activate)
+                {
+                    Adjusts.Add($"{((IFrameElement)command.Payload).Name}:activate");
+                    return true;
+                }
                 if (command.Id != FrameCommandId.Adjust) return _model.Execute(command);
                 Adjusts.Add($"{((IFrameElement)command.Payload).Name}:{(command.Index > 0 ? "+1" : "-1")}");
                 return true;

@@ -206,7 +206,9 @@ namespace Threads.UiFrames
         /// <summary>The <c>.uf-cards</c> element, or null if the markup has none.</summary>
         public IFrameElement Content { get; private set; }
         public FrameStyle Style { get; private set; } = new FrameStyle();
-        public FrameAxis Axis => Style.Get(FrameProperties.Axis, FrameAxis.Horizontal);
+        public FrameAxis Axis => Style.Get(FrameProperties.Axis, DefaultAxis);
+        /// <summary>The axis when <c>--uf-axis</c> is not set (horizontal for strips and decks).</summary>
+        protected virtual FrameAxis DefaultAxis => FrameAxis.Horizontal;
         public FrameAxis DragAxis => Axis;
         protected abstract float OffsetDp { get; }
 
@@ -227,7 +229,7 @@ namespace Threads.UiFrames
         {
             style = style ?? new FrameStyle();
             if (style.SameAs(Style)) return;
-            var axisChanged = style.Get(FrameProperties.Axis, FrameAxis.Horizontal) != Axis;
+            var axisChanged = style.Get(FrameProperties.Axis, DefaultAxis) != Axis;
             Style = style.Clone();
             ApplyModelStyle(Style);
             if (axisChanged) _layout = null;

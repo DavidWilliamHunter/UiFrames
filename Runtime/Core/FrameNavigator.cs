@@ -267,6 +267,7 @@ namespace Threads.UiFrames
             foreach (var c in parent.Children)
             {
                 if (s.Frame is DrawerFrame && c.HasClass(FrameTags.DrawerHandle)) continue;
+                if (c.HasClass(FrameTags.PointerOnly)) continue; // mouse and touch only
                 if (IsLevelsFrame(FrameOf(c))) { into.Add(c); continue; }
                 if (_host.IsControl(c)) { into.Add(c); continue; }
                 Collect(c, s, into);
@@ -300,6 +301,8 @@ namespace Threads.UiFrames
             var items = Items(scope);
             if (items.Count == 0)
             {
+                if (auto) return false; // skipping a trivial level never acts on what is in it
+                Current.Frame?.Execute(FrameCommand.Activate(item)); // the frame may act on it (a menu row)
                 Activated?.Invoke(item);
                 return true;
             }

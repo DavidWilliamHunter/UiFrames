@@ -129,8 +129,18 @@ namespace Threads.UiFrames.Toolkit
 
         public bool IsControl(IFrameElement element) =>
             element?.Native is VisualElement ve && ve != RootVe && !_madeFocusable.ContainsKey(ve) &&
-            _binder.DesignedFocusable(ve) && ve.enabledInHierarchy && ve.resolvedStyle.display != DisplayStyle.None &&
-            !InsideControl(ve);
+            _binder.DesignedFocusable(ve) && ve.enabledInHierarchy && IsDisplayed(ve) && !InsideControl(ve);
+
+        /// <summary>Neither the element nor anything around it is <c>display: none</c> (a hidden panel's buttons are not items).</summary>
+        bool IsDisplayed(VisualElement ve)
+        {
+            for (var e = ve; e != null; e = e.parent)
+            {
+                if (e.resolvedStyle.display == DisplayStyle.None) return false;
+                if (e == RootVe) break;
+            }
+            return true;
+        }
 
         public FrameControlArrows ArrowUse(IFrameElement control)
         {

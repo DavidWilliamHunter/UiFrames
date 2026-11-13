@@ -228,6 +228,10 @@ namespace Threads.UiFrames
         public const string Cards = "uf-cards";
         public const string CardDeck = "uf-card-deck";
         public const string NoDrag = "uf-no-drag";
+        /// <summary>Used by mouse and touch only: keyboard/gamepad navigation does not stop on this
+        /// element or anything inside it (e.g. a menu row's slider: the row is the stop, and
+        /// Left/Right adjust it).</summary>
+        public const string PointerOnly = "uf-pointer-only";
         public const string Joystick = "uf-joystick";
         public const string JoystickKnob = "uf-joystick__knob";
 

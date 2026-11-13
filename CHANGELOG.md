@@ -4,6 +4,13 @@
 
 ### Added
 - `FrameCommandId.Adjust`: an arrow across a frame's axis at the cards level is sent to the frame (±1 and the selected card) instead of doing nothing. Built-in frames ignore it; UI Menus uses it so Left/Right change a menu row's value.
+- `FrameCommandId.Activate`: Enter on a card with nothing inside is also sent to the card's frame.
+- `uf-pointer-only`: elements for mouse and touch only; keyboard/gamepad navigation does not stop on them or anything inside.
+- `CardFrameBase.DefaultAxis`: a card frame kind can default to vertical (UI Menus' page does).
+
+### Fixed
+- UI Toolkit: controls inside a `display: none` parent were still keyboard stops (Tab reached a hidden panel's buttons).
+- Entering a frame with one card skipped into that card; if the card held nothing to select, the card was also activated as though Enter had been pressed on it.
 
 ## [0.1.1] - preview (not yet tested on devices; release as 0.2.0 after device tests)
 
