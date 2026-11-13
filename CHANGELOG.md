@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.1.3] - preview
+
+### Fixed
+- The UXML templates (CardStrip, Drawer) failed to import on a fresh machine: their comments contained "--", which XML does not allow.
+
 ## [0.1.2] - preview
 
 ### Added
