@@ -1,0 +1,20 @@
+{
+    "name": "Threads.UiFrames.TouchController",
+    "rootNamespace": "Threads.UiFrames.TouchController",
+    "references": ["Threads.UiFrames", "Threads.UiFrames.Toolkit", "Threads.UiFrames.UGUI", "Threads.TouchController", "Unity.InputSystem", "UnityEngine.UI"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": ["THREADS_UF_TOUCHCONTROLLER"],
+    "versionDefines": [
+        {
+            "name": "com.threads.touchcontroller",
+            "expression": "0.4.0",
+            "define": "THREADS_UF_TOUCHCONTROLLER"
+        }
+    ],
+    "noEngineReferences": false
+}

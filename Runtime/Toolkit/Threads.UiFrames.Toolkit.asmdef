@@ -1,0 +1,14 @@
+{
+    "name": "Threads.UiFrames.Toolkit",
+    "rootNamespace": "Threads.UiFrames.Toolkit",
+    "references": ["Threads.UiFrames"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

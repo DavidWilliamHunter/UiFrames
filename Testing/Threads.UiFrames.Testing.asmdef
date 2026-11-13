@@ -1,0 +1,14 @@
+{
+    "name": "Threads.UiFrames.Testing",
+    "rootNamespace": "Threads.UiFrames.Testing",
+    "references": ["Threads.UiFrames"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": ["UNITY_INCLUDE_TESTS"],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

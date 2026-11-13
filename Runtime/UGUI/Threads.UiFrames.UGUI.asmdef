@@ -1,0 +1,14 @@
+{
+    "name": "Threads.UiFrames.UGUI",
+    "rootNamespace": "Threads.UiFrames.UGUI",
+    "references": ["Threads.UiFrames", "UnityEngine.UI"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
