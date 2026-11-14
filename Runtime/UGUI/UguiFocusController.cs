@@ -121,7 +121,19 @@ namespace Threads.UiFrames.UGUI
         {
             if (!(element?.Native is GameObject go) || !go || !go.activeInHierarchy) return false;
             var s = go.GetComponent<Selectable>();
-            return s && !(s is UguiNavProxy) && !(s is UguiDrawerHandle) && s.enabled && s.interactable;
+            return s && !(s is UguiNavProxy) && !(s is UguiDrawerHandle) && s.enabled && s.interactable && !IsPointerOnly(s);
+        }
+
+        /// <summary>Inside a <c>uf-pointer-only</c> element (under this root): mouse and touch only.</summary>
+        bool IsPointerOnly(Selectable s)
+        {
+            for (var t = s.transform; t; t = t.parent)
+            {
+                var c = t.GetComponent<UiFrameClasses>();
+                if (c && c.HasClass(FrameTags.PointerOnly)) return true;
+                if (t == _binder.Root) break;
+            }
+            return false;
         }
 
         public FrameControlArrows ArrowUse(IFrameElement control)
@@ -189,6 +201,12 @@ namespace Threads.UiFrames.UGUI
         {
             if (!s || _originalNavigation.ContainsKey(s)) return;
             _originalNavigation.Add(s, s.navigation);
+            if (IsPointerOnly(s))
+            {
+                // A click must not select it (Selectables with navigation select themselves on press).
+                s.navigation = new Navigation { mode = Navigation.Mode.None };
+                return;
+            }
             s.navigation = s is Slider || s is Scrollbar ? SelfNavigation(s) : new Navigation { mode = Navigation.Mode.None };
             if (s is InputField field && !_originalActivate.ContainsKey(field))
             {
@@ -266,9 +284,23 @@ namespace Threads.UiFrames.UGUI
 
         FrameNavigator Navigator => _host != null && _host.IsRunning ? _host.Navigator : null;
 
+        /// <summary>The navigator, if this object is still what it has selected (or nothing is). Other
+        /// handlers on the object run first and may move the selection (a button that opens a page):
+        /// the event must not then act on the new selection.</summary>
+        FrameNavigator NavigatorForThis
+        {
+            get
+            {
+                var nav = Navigator;
+                if (nav == null) return null;
+                var selected = nav.Selected?.Native;
+                return selected == null || ReferenceEquals(selected, gameObject) ? nav : null;
+            }
+        }
+
         public void OnMove(AxisEventData eventData)
         {
-            var nav = Navigator;
+            var nav = NavigatorForThis;
             if (nav == null) return;
             FrameNavDirection d;
             switch (eventData.moveDir)
@@ -284,12 +316,14 @@ namespace Threads.UiFrames.UGUI
 
         public void OnSubmit(BaseEventData eventData)
         {
-            if (Navigator != null && Navigator.Submit()) eventData.Use();
+            var nav = NavigatorForThis;
+            if (nav != null && nav.Submit()) eventData.Use();
         }
 
         public void OnCancel(BaseEventData eventData)
         {
-            if (Navigator != null && Navigator.Cancel()) eventData.Use();
+            var nav = NavigatorForThis;
+            if (nav != null && nav.Cancel()) eventData.Use();
         }
     }
 

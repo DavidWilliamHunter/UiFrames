@@ -74,6 +74,34 @@ namespace Threads.UiFrames.Tests
         }
 
         [UnityTest]
+        public IEnumerator EachGamepadUsesItsOwnConfirmAndBackButtons()
+        {
+            // Xbox and PlayStation confirm with the bottom button; Nintendo confirms with A, on the right.
+            var pad = InputSystem.AddDevice<Gamepad>();
+            PressAndRelease(_kb.tabKey);
+            yield return null;
+            PressAndRelease(pad.buttonSouth);
+            yield return null;
+            Assert.AreEqual(0, CardIndex(), "A / Cross confirms");
+            PressAndRelease(pad.buttonEast);
+            yield return null;
+            Assert.AreSame(_strip.Element, _nav.Selected, "B / Circle goes back");
+
+#if UNITY_EDITOR || UNITY_STANDALONE || UNITY_SWITCH
+            var nintendo = InputSystem.AddDevice<UnityEngine.InputSystem.Switch.SwitchProControllerHID>();
+            PressAndRelease(nintendo.buttonSouth); // labelled B: back, not confirm
+            yield return null;
+            Assert.AreSame(_strip.Element, _nav.Selected, "Nintendo's B does not confirm");
+            PressAndRelease(nintendo.buttonEast); // labelled A
+            yield return null;
+            Assert.AreEqual(0, CardIndex(), "Nintendo's A confirms");
+            PressAndRelease(nintendo.buttonSouth);
+            yield return null;
+            Assert.AreSame(_strip.Element, _nav.Selected, "Nintendo's B goes back");
+#endif
+        }
+
+        [UnityTest]
         public IEnumerator HoldingAnArrowRepeats()
         {
             PressAndRelease(_kb.tabKey);

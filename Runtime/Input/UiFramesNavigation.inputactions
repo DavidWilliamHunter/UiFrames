@@ -231,7 +231,7 @@
                 {
                     "name": "",
                     "id": "0ad4e5b0-10f2-4ed7-b7aa-2159b23f73f3",
-                    "path": "<Gamepad>/buttonSouth",
+                    "path": "<Gamepad>/{Submit}",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -253,7 +253,7 @@
                 {
                     "name": "",
                     "id": "235b5c24-c33b-4b09-9972-734eb2113e1c",
-                    "path": "<Gamepad>/buttonEast",
+                    "path": "<Gamepad>/{Cancel}",
                     "interactions": "",
                     "processors": "",
                     "groups": "",

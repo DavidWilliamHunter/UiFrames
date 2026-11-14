@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.1.4] - preview
+
+### Added
+- `FrameNavigator.TopLevelCancel`: Esc at the top level that nothing used goes to your handler (UI Menus goes back a page). uGUI has no event bubbling, so this is how an Esc on any element reaches its menu.
+
+### Fixed
+- uGUI: `uf-pointer-only` Selectables were still taken over for keyboard navigation (and selected on click). They now get no navigation and are never items.
+- Gamepad confirm and back are bound by the Input System's `{Submit}` and `{Cancel}` usages instead of the bottom and right buttons, so each controller's convention is followed (on Nintendo pads A, on the right, confirms and B, at the bottom, goes back). Rebinding through the actions asset is unchanged.
+- uGUI: a Submit, Move or Cancel acted twice when another handler on the selected object (a button's click) moved the selection: the navigator then acted on the new selection with the same key press.
+
 ## [0.1.3] - preview
 
 ### Fixed

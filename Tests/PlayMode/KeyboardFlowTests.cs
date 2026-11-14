@@ -145,6 +145,72 @@ namespace Threads.UiFrames.Tests
         }
 
         [UnityTest]
+        public IEnumerator UguiPointerOnlyControlsAreNotKeyboardStops()
+        {
+            yield return BuildUgui();
+            var card = GameObject.Find("Card 1").transform;
+            var b = DefaultControls.CreateButton(new DefaultControls.Resources());
+            b.name = "Pointer Button";
+            b.transform.SetParent(card, false);
+            b.AddComponent<UiFrameClasses>().SetClasses(FrameTags.PointerOnly);
+            _runner.Rescan();
+            Assert.AreEqual(Navigation.Mode.None, b.GetComponent<Button>().navigation.mode, "a click does not select it");
+
+            var activated = new List<string>();
+            _runner.onActivated.AddListener(activated.Add);
+            yield return Tap(_kb.tabKey);
+            yield return Tap(_kb.enterKey);
+            Assert.AreEqual("Card 1", Selected);
+            yield return Tap(_kb.enterKey);
+            Assert.AreEqual("Card 1", Selected, "the button is not a stop");
+            CollectionAssert.AreEqual(new[] { "Card 1" }, activated, "so Enter acts on the card");
+        }
+
+        [UnityTest]
+        public IEnumerator UguiClickThatMovesTheSelectionDoesNotActOnTheNewOne()
+        {
+            yield return BuildUgui();
+            IFrameElement Find(GameObject go)
+            {
+                IFrameElement found = null;
+                void Walk(IFrameElement e)
+                {
+                    if (found != null) return;
+                    if (ReferenceEquals(e.Native, go)) { found = e; return; }
+                    foreach (var c in e.Children) Walk(c);
+                }
+                Walk(Nav.Host.Root);
+                return found;
+            }
+            var card1 = GameObject.Find("Card 1");
+            GameObject.Find("Button 4").GetComponent<Button>().onClick.AddListener(() => Nav.SelectElement(Find(card1)));
+            var activated = new List<string>();
+            _runner.onActivated.AddListener(activated.Add);
+            yield return Tap(_kb.tabKey);
+            yield return Tap(_kb.enterKey);
+            for (var i = 0; i < 3; i++) yield return Tap(_kb.rightArrowKey);
+            yield return Tap(_kb.enterKey);
+            Assert.AreEqual("Button 4", Selected);
+            yield return Tap(_kb.enterKey);
+            Assert.AreEqual("Card 1", Selected, "the click moved the selection");
+            CollectionAssert.IsEmpty(activated, "the same Enter did not also act on the card");
+        }
+
+        [UnityTest]
+        public IEnumerator TopLevelEscGoesToTheHook()
+        {
+            yield return BuildUgui();
+            var seen = new List<string>();
+            Nav.TopLevelCancel += e => { seen.Add(e?.Name); return true; };
+            yield return Tap(_kb.tabKey);
+            yield return Tap(_kb.enterKey);
+            yield return Tap(_kb.escapeKey);
+            CollectionAssert.IsEmpty(seen, "leaving a level is not a top-level Esc");
+            yield return Tap(_kb.escapeKey);
+            CollectionAssert.AreEqual(new[] { "Photos" }, seen);
+        }
+
+        [UnityTest]
         public IEnumerator UguiFlowFromFactoryBuiltScene()
         {
             yield return BuildUgui();

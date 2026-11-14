@@ -70,6 +70,9 @@ namespace Threads.UiFrames
         /// decides what that does.</summary>
         public event Action<IFrameElement> Activated;
         public event Action SelectionChanged;
+        /// <summary>Esc at the top level that nothing used (no level to leave, no drawer to close),
+        /// with the selected element. Return true if you used it (a menu goes back a page).</summary>
+        public event Func<IFrameElement, bool> TopLevelCancel;
 
         Scope Current => _stack[_stack.Count - 1];
 
@@ -178,6 +181,9 @@ namespace Threads.UiFrames
             {
                 // At the top: Esc closes the selected drawer if something else opened it.
                 if (FrameOf(Current.Selected) is DrawerFrame open && open.IsOpen) return open.Execute(FrameCommand.Close);
+                if (TopLevelCancel != null)
+                    foreach (Func<IFrameElement, bool> handler in TopLevelCancel.GetInvocationList())
+                        if (handler(Current.Selected)) return true;
                 return false;
             }
             Scope popped;

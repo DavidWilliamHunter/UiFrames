@@ -78,8 +78,8 @@ namespace Threads.UiFrames.Input
 
         /// <summary>
         /// The default bindings (the same as the shipped <c>UiFramesNavigation.inputactions</c>):
-        /// Navigate (arrows, d-pad, left stick), Submit (Enter, Space, gamepad A), Cancel (Esc,
-        /// gamepad B), Tab, Page (Page Up/Down, shoulders), Home/End, Toggle drawer (gamepad Y),
+        /// Navigate (arrows, d-pad, left stick), Submit (Enter, Space, the gamepad's confirm button), Cancel (Esc,
+        /// the gamepad's back button: <c>{Submit}</c>/<c>{Cancel}</c> usages, so Nintendo's A-right/B-bottom is followed), Tab, Page (Page Up/Down, shoulders), Home/End, Toggle drawer (gamepad Y),
         /// CycleFrame (F6, gamepad Select), Reverse (Shift: held, Tab and CycleFrame go back).
         /// Close has no default binding. For uGUI, Navigate/Submit/Cancel are only used while
         /// nothing is selected; the EventSystem's input module delivers them otherwise.
@@ -96,9 +96,9 @@ namespace Threads.UiFrames.Input
             var submit = map.AddAction(SubmitAction, InputActionType.Button, "<Keyboard>/enter");
             submit.AddBinding("<Keyboard>/numpadEnter");
             submit.AddBinding("<Keyboard>/space");
-            submit.AddBinding("<Gamepad>/buttonSouth");
+            submit.AddBinding("<Gamepad>/{Submit}"); // the confirm button of each layout: A/Cross, but A (east) on Nintendo
             var cancel = map.AddAction(CancelAction, InputActionType.Button, "<Keyboard>/escape");
-            cancel.AddBinding("<Gamepad>/buttonEast");
+            cancel.AddBinding("<Gamepad>/{Cancel}"); // B/Circle, but B (south) on Nintendo
             map.AddAction(TabAction, InputActionType.Button, "<Keyboard>/tab");
 
             var page = map.AddAction(PageAction, InputActionType.Value, expectedControlLayout: "Axis");
